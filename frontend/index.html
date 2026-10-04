@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CipherPay Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="topbar">
+        <h1>CipherPay</h1>
+        <span class="tag">Fraud Monitoring Console</span>
+      </header>
+
+      <main class="grid">
+        <section class="panel form-panel">
+          <h2>Submit transaction</h2>
+          <form id="transaction-form">
+            <label>
+              User ID
+              <input type="text" id="user_id" value="demo-user" required />
+            </label>
+            <label>
+              Amount
+              <input type="number" id="amount" value="2500" min="0" step="0.01" required />
+            </label>
+            <label>
+              Currency
+              <select id="currency">
+                <option>USD</option>
+                <option>EUR</option>
+                <option>GBP</option>
+                <option>JPY</option>
+              </select>
+            </label>
+            <label>
+              Merchant
+              <input type="text" id="merchant" value="crypto" required />
+            </label>
+            <label>
+              Device ID
+              <input type="text" id="device_id" value="dev-1234" required />
+            </label>
+            <label>
+              Location
+              <input type="text" id="location" value="Berlin" required />
+            </label>
+            <button type="submit">Submit</button>
+          </form>
+        </section>
+
+        <section class="panel stats-panel">
+          <h2>Dashboard</h2>
+          <div class="metrics">
+            <div class="metric"><span id="total_txn">0</span><small>Total transactions</small></div>
+            <div class="metric"><span id="avg_risk">0</span><small>Avg risk</small></div>
+            <div class="metric"><span id="alerts_count">0</span><small>Alerts</small></div>
+          </div>
+          <div id="status-box" class="status-box">Loading...</div>
+        </section>
+      </main>
+
+      <section class="panel">
+        <h2>Recent alerts</h2>
+        <div id="alerts-list" class="list"></div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
