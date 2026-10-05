@@ -1,6 +1,34 @@
 const API_BASE = `${window.location.origin === 'null' ? 'http://localhost:8000' : ''}/api/v1`;
 const SESSION_KEY = 'cipherpay-session';
 
+const workspaceLinks = [...document.querySelectorAll('.nav-link[href^="#"]')];
+const workspaceTitle = document.getElementById('breadcrumb-current');
+const sectionTitles = new Map(workspaceLinks.map((link) => [
+  link.hash,
+  link.querySelector('.nav-count') ? 'Risk alerts' : link.textContent.trim(),
+]));
+
+function syncWorkspaceNavigation() {
+  const currentHash = window.location.hash || '#overview';
+  const currentTitle = sectionTitles.get(currentHash) || 'Overview';
+
+  workspaceLinks.forEach((link) => {
+    const isCurrent = link.hash === currentHash;
+    link.classList.toggle('is-active', isCurrent);
+    if (isCurrent) {
+      link.setAttribute('aria-current', 'page');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
+
+  workspaceTitle.textContent = currentTitle;
+  document.title = `${currentTitle} · CipherPay`;
+}
+
+window.addEventListener('hashchange', syncWorkspaceNavigation);
+syncWorkspaceNavigation();
+
 function readSession() {
   try {
     const session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
