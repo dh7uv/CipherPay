@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/static/styles.css?v=2" />
+    <link rel="stylesheet" href="/static/styles.css?v=3" />
   </head>
   <body>
     <div class="app-shell">
@@ -137,29 +137,30 @@
               </div>
             </article>
 
-            <div class="right-column">
-              <article class="card risk-card analyst-only" id="analyst-risk-card">
-                <div class="card-heading compact-heading">
-                  <div><div class="section-kicker">RISK OVERVIEW</div><h2>Risk distribution</h2></div>
-                  <span class="subtle-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5m0 14h17M8 15l4-5 3 3 5-7" /></svg></span>
-                </div>
-                <div class="risk-summary"><strong id="risk-total">—</strong><span>transactions scored</span></div>
-                <div class="risk-bars" id="risk-distribution">
-                  <div class="risk-bar-row"><div class="risk-bar-label"><span class="legend-dot low-dot"></span><span>Low</span><strong id="risk-low-count">—</strong></div><div class="bar-track"><span class="bar-fill low-fill" id="risk-low-bar"></span></div></div>
-                  <div class="risk-bar-row"><div class="risk-bar-label"><span class="legend-dot medium-dot"></span><span>Medium</span><strong id="risk-medium-count">—</strong></div><div class="bar-track"><span class="bar-fill medium-fill" id="risk-medium-bar"></span></div></div>
-                  <div class="risk-bar-row"><div class="risk-bar-label"><span class="legend-dot high-dot"></span><span>High</span><strong id="risk-high-count">—</strong></div><div class="bar-track"><span class="bar-fill high-fill" id="risk-high-bar"></span></div></div>
-                </div>
-                <p class="risk-footnote">Risk levels are assigned by the transaction scoring engine.</p>
-              </article>
+          </section>
 
-              <article class="card alerts-card analyst-only" id="alerts">
-                <div class="card-heading compact-heading">
-                  <div><div class="section-kicker">PRIORITY QUEUE</div><h2>Recent alerts</h2></div>
-                  <span class="alert-live"><span class="pulse-dot"></span> LIVE</span>
-                </div>
-                <div class="alerts-list" id="alerts-list"><div class="inline-loading">Loading alerts…</div></div>
-              </article>
-            </div>
+          <section class="insights-grid" aria-label="Risk insights">
+            <article class="card risk-card analyst-only" id="analyst-risk-card">
+              <div class="card-heading compact-heading">
+                <div><div class="section-kicker">RISK OVERVIEW</div><h2>Risk distribution</h2></div>
+                <span class="subtle-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5m0 14h17M8 15l4-5 3 3 5-7" /></svg></span>
+              </div>
+              <div class="risk-summary"><strong id="risk-total">—</strong><span>transactions scored</span></div>
+              <div class="risk-bars" id="risk-distribution">
+                <div class="risk-bar-row"><div class="risk-bar-label"><span class="legend-dot low-dot"></span><span>Low</span><strong id="risk-low-count">—</strong></div><div class="bar-track"><span class="bar-fill low-fill" id="risk-low-bar"></span></div></div>
+                <div class="risk-bar-row"><div class="risk-bar-label"><span class="legend-dot medium-dot"></span><span>Medium</span><strong id="risk-medium-count">—</strong></div><div class="bar-track"><span class="bar-fill medium-fill" id="risk-medium-bar"></span></div></div>
+                <div class="risk-bar-row"><div class="risk-bar-label"><span class="legend-dot high-dot"></span><span>High</span><strong id="risk-high-count">—</strong></div><div class="bar-track"><span class="bar-fill high-fill" id="risk-high-bar"></span></div></div>
+              </div>
+              <p class="risk-footnote">Risk levels are assigned by the transaction scoring engine.</p>
+            </article>
+
+            <article class="card alerts-card analyst-only" id="alerts">
+              <div class="card-heading compact-heading">
+                <div><div class="section-kicker">PRIORITY QUEUE</div><h2>Recent alerts</h2></div>
+                <span class="alert-live"><span class="pulse-dot"></span> LIVE</span>
+              </div>
+              <div class="alerts-list" id="alerts-list"><div class="inline-loading">Loading alerts…</div></div>
+            </article>
           </section>
 
           <section class="card form-card" id="new-transaction" aria-labelledby="form-title">
