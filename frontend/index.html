@@ -3,70 +3,192 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CipherPay Dashboard</title>
-    <link rel="stylesheet" href="styles.css" />
+    <meta name="theme-color" content="#101b2d" />
+    <meta
+      name="description"
+      content="CipherPay transaction monitoring and fraud detection dashboard."
+    />
+    <title>Overview · CipherPay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <div class="container">
-      <header class="topbar">
-        <h1>CipherPay</h1>
-        <span class="tag">Fraud Monitoring Console</span>
-      </header>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="#overview" aria-label="CipherPay overview">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M16 3.5 27 9.8v12.4L16 28.5 5 22.2V9.8L16 3.5Z" stroke="currentColor" stroke-width="1.8" />
+              <path d="m11.4 16 3.1 3.1 6.2-6.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            </svg>
+          </span>
+          <span class="brand-name">cipher<span>pay</span></span>
+        </a>
 
-      <main class="grid">
-        <section class="panel form-panel">
-          <h2>Submit transaction</h2>
-          <form id="transaction-form">
-            <label>
-              User ID
-              <input type="text" id="user_id" value="demo-user" required />
-            </label>
-            <label>
-              Amount
-              <input type="number" id="amount" value="2500" min="0" step="0.01" required />
-            </label>
-            <label>
-              Currency
-              <select id="currency">
-                <option>USD</option>
-                <option>EUR</option>
-                <option>GBP</option>
-                <option>JPY</option>
-              </select>
-            </label>
-            <label>
-              Merchant
-              <input type="text" id="merchant" value="crypto" required />
-            </label>
-            <label>
-              Device ID
-              <input type="text" id="device_id" value="dev-1234" required />
-            </label>
-            <label>
-              Location
-              <input type="text" id="location" value="Berlin" required />
-            </label>
-            <button type="submit">Submit</button>
-          </form>
-        </section>
+        <div class="sidebar-label">WORKSPACE</div>
+        <nav class="nav-list">
+          <a class="nav-link is-active" href="#overview" aria-current="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></svg>
+            Overview
+          </a>
+          <a class="nav-link" href="#transactions">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" /><circle cx="18" cy="17" r="2.5" /></svg>
+            Transactions
+          </a>
+          <a class="nav-link analyst-only" id="analyst-alerts-link" href="#alerts">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+            Risk alerts
+            <span class="nav-count" id="sidebar-alert-count">—</span>
+          </a>
+          <a class="nav-link" href="#new-transaction">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            New transaction
+          </a>
+        </nav>
 
-        <section class="panel stats-panel">
-          <h2>Dashboard</h2>
-          <div class="metrics">
-            <div class="metric"><span id="total_txn">0</span><small>Total transactions</small></div>
-            <div class="metric"><span id="avg_risk">0</span><small>Avg risk</small></div>
-            <div class="metric"><span id="alerts_count">0</span><small>Alerts</small></div>
+        <div class="sidebar-bottom">
+          <div class="environment-card">
+            <span class="environment-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z" /><path d="m9 12 2 2 4-4" /></svg>
+            </span>
+            <span><strong>Protected workspace</strong><small>Fraud monitoring active</small></span>
+            <span class="pulse-dot" aria-label="Active"></span>
           </div>
-          <div id="status-box" class="status-box">Loading...</div>
-        </section>
+          <div class="profile">
+            <div class="avatar" aria-hidden="true">DA</div>
+            <div class="profile-copy"><strong id="profile-name">Demo Analyst</strong><small id="profile-role">Analyst account</small></div>
+            <button class="profile-menu" id="logout-button" type="button" aria-label="Sign out" title="Sign out">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5m5 5H3m9-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content" id="overview">
+        <header class="topbar">
+          <div class="breadcrumb"><span>Workspace</span><span class="breadcrumb-slash">/</span><strong>Overview</strong></div>
+          <div class="topbar-actions">
+            <span class="system-status" id="system-status" role="status">
+              <span class="status-dot"></span>
+              Checking system
+            </span>
+            <button class="icon-button refresh-button" id="refresh-button" type="button" aria-label="Refresh dashboard" title="Refresh dashboard">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5" /><path d="M5.6 9a7 7 0 0 1 11.6-2L20 12M4 12l2.8 5a7 7 0 0 0 11.6-2" /></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="page-content">
+          <section class="welcome-row" aria-labelledby="page-title">
+            <div>
+              <div class="eyebrow"><span class="eyebrow-line"></span> FRAUD OPERATIONS</div>
+              <h1 id="page-title">Good to see you, <span id="welcome-user">Analyst</span><span class="title-period">.</span></h1>
+              <p class="welcome-copy">Here’s what’s happening across your transaction network.</p>
+            </div>
+            <a class="button button-primary welcome-action" href="#new-transaction">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+              Run a transaction
+            </a>
+          </section>
+
+          <section class="metrics-grid" aria-label="Key performance indicators">
+            <article class="metric-card">
+              <div class="metric-top"><span class="metric-label">Total transactions</span><span class="metric-icon icon-blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" /><circle cx="18" cy="17" r="2.5" /></svg></span></div>
+              <div class="metric-value" id="total_txn">—</div>
+              <div class="metric-foot"><span class="metric-neutral">All processed activity</span></div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span class="metric-label">Average risk score</span><span class="metric-icon icon-amber"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M4.2 5.2l2.1 2.1m11.4 11.4 2.1 2.1M3 12h3m12 0h3M4.2 18.8l2.1-2.1M17.7 7.3l2.1-2.1" /><circle cx="12" cy="12" r="5" /></svg></span></div>
+              <div class="metric-value"><span id="avg_risk">—</span><span class="metric-unit">/ 100</span></div>
+              <div class="metric-foot"><span class="metric-neutral">Across all transactions</span></div>
+            </article>
+            <article class="metric-card analyst-only" id="analyst-alert-metric">
+              <div class="metric-top"><span class="metric-label">Open risk alerts</span><span class="metric-icon icon-rose"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg></span></div>
+              <div class="metric-value" id="alerts_count">—</div>
+              <div class="metric-foot"><span class="metric-neutral">Needs analyst attention</span></div>
+            </article>
+          </section>
+
+          <section class="dashboard-grid">
+            <article class="card transactions-card" id="transactions">
+              <div class="card-heading">
+                <div><div class="section-kicker">ACTIVITY</div><h2>Recent transactions</h2><p class="card-description">Review the latest activity across your network.</p></div>
+                <span class="table-count" id="transaction-count">Loading</span>
+              </div>
+              <div class="table-toolbar">
+                <label class="search-box" for="transaction-search">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 4.5 4.5" /></svg>
+                  <input id="transaction-search" type="search" placeholder="Search merchant or ID" autocomplete="off" />
+                </label>
+                <label class="filter-select-wrap" for="risk-filter"><span class="visually-hidden">Filter by risk level</span>
+                  <select id="risk-filter"><option value="all">All risk levels</option><option value="Low">Low risk</option><option value="Medium">Medium risk</option><option value="High">High risk</option></select>
+                </label>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th scope="col">TRANSACTION</th><th scope="col">MERCHANT</th><th scope="col">AMOUNT</th><th scope="col">RISK</th><th scope="col">STATUS</th><th class="analyst-only" scope="col">INTEGRITY</th></tr></thead>
+                  <tbody id="transactions-list"><tr><td colspan="5" class="empty-cell">Loading transactions…</td></tr></tbody>
+                </table>
+              </div>
+            </article>
+
+            <div class="right-column">
+              <article class="card risk-card analyst-only" id="analyst-risk-card">
+                <div class="card-heading compact-heading">
+                  <div><div class="section-kicker">RISK OVERVIEW</div><h2>Risk distribution</h2></div>
+                  <span class="subtle-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5m0 14h17M8 15l4-5 3 3 5-7" /></svg></span>
+                </div>
+                <div class="risk-summary"><strong id="risk-total">—</strong><span>transactions scored</span></div>
+                <div class="risk-bars" id="risk-distribution">
+                  <div class="risk-bar-row"><div class="risk-bar-label"><span class="legend-dot low-dot"></span><span>Low</span><strong id="risk-low-count">—</strong></div><div class="bar-track"><span class="bar-fill low-fill" id="risk-low-bar"></span></div></div>
+                  <div class="risk-bar-row"><div class="risk-bar-label"><span class="legend-dot medium-dot"></span><span>Medium</span><strong id="risk-medium-count">—</strong></div><div class="bar-track"><span class="bar-fill medium-fill" id="risk-medium-bar"></span></div></div>
+                  <div class="risk-bar-row"><div class="risk-bar-label"><span class="legend-dot high-dot"></span><span>High</span><strong id="risk-high-count">—</strong></div><div class="bar-track"><span class="bar-fill high-fill" id="risk-high-bar"></span></div></div>
+                </div>
+                <p class="risk-footnote">Risk levels are assigned by the transaction scoring engine.</p>
+              </article>
+
+              <article class="card alerts-card analyst-only" id="alerts">
+                <div class="card-heading compact-heading">
+                  <div><div class="section-kicker">PRIORITY QUEUE</div><h2>Recent alerts</h2></div>
+                  <span class="alert-live"><span class="pulse-dot"></span> LIVE</span>
+                </div>
+                <div class="alerts-list" id="alerts-list"><div class="inline-loading">Loading alerts…</div></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="card form-card" id="new-transaction" aria-labelledby="form-title">
+            <div class="form-intro">
+              <div class="section-kicker">SIMULATION</div>
+              <h2 id="form-title">Run a transaction check</h2>
+              <p>Submit a synthetic payment to evaluate its fraud risk in real time.</p>
+              <div class="simulation-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z" /><path d="M12 8v4m0 4h.01" /></svg><span>Simulation only — no real payments are processed.</span></div>
+            </div>
+            <form id="transaction-form">
+              <div class="form-fields">
+                <label class="field field-wide" for="user_id">User ID<span class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 20v-1.5a7 7 0 0 1 14 0V20Z" /></svg><input type="text" id="user_id" value="demo-user" required autocomplete="off" /></span></label>
+                <label class="field" for="amount">Amount<span class="input-wrap"><span class="input-prefix">$</span><input type="number" id="amount" value="2500" min="0.01" step="0.01" required /></span></label>
+                <label class="field" for="currency">Currency<span class="input-wrap select-wrap"><select id="currency"><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg></span></label>
+                <label class="field" for="merchant">Merchant<span class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18M5 10V6l7-3 7 3v4m-14 0v9m5-9v9m5-9v9m5-9v9M3 21h18" /></svg><input type="text" id="merchant" value="crypto" required autocomplete="off" /></span></label>
+                <label class="field" for="device_id">Device ID<span class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M10 17h4" /></svg><input type="text" id="device_id" value="dev-1234" required autocomplete="off" /></span></label>
+                <label class="field field-wide" for="location">Location<span class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg><input type="text" id="location" value="Berlin" required autocomplete="off" /></span></label>
+              </div>
+              <div class="form-footer">
+                <p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p>
+                <button class="button button-primary submit-button" id="submit-button" type="submit"><span>Analyze transaction</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>
+              </div>
+            </form>
+          </section>
+
+          <footer class="page-footer"><span><span class="footer-lock" aria-hidden="true">◇</span> CipherPay <span class="footer-separator">·</span> Secure transaction monitoring</span><span>Demo environment <span class="footer-separator">·</span> Synthetic data only</span></footer>
+        </div>
       </main>
-
-      <section class="panel">
-        <h2>Recent alerts</h2>
-        <div id="alerts-list" class="list"></div>
-      </section>
     </div>
-
-    <script src="app.js"></script>
+    <script src="/static/app.js" defer></script>
   </body>
 </html>

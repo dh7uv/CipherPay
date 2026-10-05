@@ -1,6 +1,4 @@
 from functools import lru_cache
-from typing import Literal
-
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -10,6 +8,7 @@ class Settings(BaseSettings):
 
     app_name: str = "CipherPay"
     debug: bool = True
+    seed_demo_data: bool = False
     api_v1_str: str = "/api/v1"
     secret_key: str = "change-me"
     algorithm: str = "HS256"
@@ -19,6 +18,9 @@ class Settings(BaseSettings):
     redis_host: str = "localhost"
     redis_port: int = 6379
     redis_password: str = ""
+    redis_rate_limit: int = Field(default=60, ge=1)
+    redis_rate_window_seconds: int = Field(default=60, ge=1)
+    fraud_blacklisted_device_ids: str = ""
     encryption_key: str = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
     hmac_secret_key: str = "super-secret-hmac-key-here"
 

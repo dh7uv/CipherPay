@@ -5,67 +5,92 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
-from .database import ping_database
+from .database import initialize_store, mongo_connected, persist_document, ping_database
 from .routes.alerts import router as alerts_router
 from .routes.analytics import router as analytics_router
 from .routes.auth import router as auth_router
 from .routes.security import router as security_router
 from .routes.transactions import router as transactions_router
 from .services.auth_service import hash_password
+from .services.crypto_service import encrypt_value, sign_transaction
+from .services.redis_service import redis_service
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    await ping_database()
-    if not _.state.store["users"]:
-        _.state.store["users"] = [{
-            "_id": "demo-user",
-            "email": "demo@cipherpay.local",
-            "password_hash": hash_password("demo123"),
-            "role": "analyst",
-            "status": "active",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }]
-        _.state.store["transactions"] = [{
-            "transaction_id": "txn_demo_001",
-            "user_id": "demo-user",
-            "amount": 4800.0,
-            "currency": "USD",
-            "merchant": "crypto",
-            "device_id": "dev-2048",
-            "location": "Berlin",
-            "status": "Under Review",
-            "risk_score": 76,
-            "risk_category": "High",
-            "risk_reasons": ["Large transaction value", "High-risk merchant category"],
-            "integrity_hmac": "demo-signature",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }]
-        _.state.store["alerts"] = [{
-            "alert_id": "alert_demo_001",
-            "transaction_id": "txn_demo_001",
-            "severity": "High",
-            "reason": "Large transaction value; High-risk merchant category",
-            "status": "Open",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }]
-        _.state.store["audit_logs"] = [{
-            "log_id": "log_demo_001",
-            "actor_id": "demo-user",
-            "action": "USER_LOGIN",
-            "resource_id": "demo-user",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "outcome": "SUCCESS",
-        }]
+    await initialize_store(_.state.store)
+    if settings.seed_demo_data:
+        await seed_demo_data(_.state.store)
     yield
+
+
+async def seed_demo_data(store: dict[str, list[dict]]):
+    now = datetime.now(timezone.utc).isoformat()
+    user = next(
+        (
+            existing for existing in store["users"]
+            if existing.get("email") == "demo@cipherpay.local"
+        ),
+        None,
+    ) or {
+        "_id": "demo-user",
+        "email": "demo@cipherpay.local",
+        "password_hash": hash_password("demo123"),
+        "role": "analyst",
+        "status": "active",
+        "created_at": now,
+    }
+    transaction_payload = {
+        "transaction_id": "txn_demo_001",
+        "user_id": user["_id"],
+        "amount": 4800.0,
+        "currency": "USD",
+        "merchant": "crypto",
+        "device_id": encrypt_value("dev-2048"),
+        "location": encrypt_value("Berlin"),
+        "status": "Under Review",
+        "risk_score": 76,
+        "risk_category": "High",
+        "risk_reasons": ["Large transaction value", "High-risk merchant category"],
+        "created_at": now,
+    }
+    transaction = {
+        **transaction_payload,
+        "integrity_hmac": sign_transaction(transaction_payload),
+    }
+    alert = {
+        "alert_id": "alert_demo_001",
+        "transaction_id": "txn_demo_001",
+        "severity": "High",
+        "reason": "Large transaction value; High-risk merchant category",
+        "status": "Open",
+        "created_at": now,
+        "updated_at": now,
+    }
+    audit_log = {
+        "log_id": "log_demo_001",
+        "actor_id": user["_id"],
+        "action": "USER_LOGIN",
+        "resource_id": user["_id"],
+        "timestamp": now,
+        "outcome": "SUCCESS",
+    }
+    demo_documents = (
+        ("users", "_id", user),
+        ("transactions", "transaction_id", transaction),
+        ("alerts", "alert_id", alert),
+        ("audit_logs", "log_id", audit_log),
+    )
+    for collection_name, key, document in demo_documents:
+        if not any(item.get(key) == document[key] for item in store[collection_name]):
+            store[collection_name].append(document)
+            await persist_document(collection_name, document)
 
 
 app = FastAPI(
@@ -75,14 +100,6 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
 
 app.state.store = {
@@ -112,11 +129,16 @@ async def dashboard_page():
     return FileResponse(frontend_dir / "index.html")
 
 
+@app.get("/login")
+async def login_page():
+    return FileResponse(frontend_dir / "login.html")
+
+
 @app.get(f"{settings.api_v1_str}/health")
 async def healthcheck():
-    db_status = await ping_database()
     return {
         "status": "ok",
-        "database_connected": db_status,
+        "database_connected": await ping_database() and mongo_connected(),
+        "redis_connected": redis_service.connected,
         "app": settings.app_name,
     }

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101b2d" />
+    <meta name="description" content="Sign in to the CipherPay fraud operations workspace." />
+    <title>Sign in · CipherPay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="login-page">
+    <main class="login-layout">
+      <section class="login-story" aria-label="About CipherPay">
+        <a class="brand login-brand" href="/login" aria-label="CipherPay sign in">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M16 3.5 27 9.8v12.4L16 28.5 5 22.2V9.8L16 3.5Z" stroke="currentColor" stroke-width="1.8" /><path d="m11.4 16 3.1 3.1 6.2-6.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" /></svg>
+          </span>
+          <span class="brand-name">cipher<span>pay</span></span>
+        </a>
+        <div class="login-story-copy">
+          <span class="login-overline"><span class="pulse-dot"></span> FRAUD OPERATIONS PLATFORM</span>
+          <h1>Clarity and confidence in every transaction.</h1>
+          <p>Monitor payment activity, investigate risk signals, and keep your transaction network protected.</p>
+          <div class="login-feature-list">
+            <div class="login-feature"><span class="login-feature-icon" aria-hidden="true">↗</span><span><strong>Real-time risk signals</strong><small>See suspicious activity as it happens.</small></span></div>
+            <div class="login-feature"><span class="login-feature-icon" aria-hidden="true">◇</span><span><strong>Integrity by design</strong><small>Encrypted data and verifiable records.</small></span></div>
+          </div>
+        </div>
+        <p class="login-story-footer">A secure simulation environment <span>·</span> Synthetic data only</p>
+      </section>
+
+      <section class="login-panel" aria-labelledby="login-title">
+        <div class="login-form-wrap">
+          <div class="login-mobile-brand">
+            <a class="brand" href="/login" aria-label="CipherPay sign in"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 3.5 27 9.8v12.4L16 28.5 5 22.2V9.8L16 3.5Z" stroke="currentColor" stroke-width="1.8" /><path d="m11.4 16 3.1 3.1 6.2-6.3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" /></svg></span><span class="brand-name">cipher<span>pay</span></span></a>
+          </div>
+          <span class="section-kicker">WELCOME BACK</span>
+          <h2 id="login-title">Sign in to your workspace</h2>
+          <p class="login-form-subtitle">Enter your analyst credentials to continue.</p>
+
+          <form class="login-form" id="login-form">
+            <label class="login-field" for="email">Email address<span class="login-input"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg><input id="email" name="email" type="email" placeholder="you@company.com" autocomplete="username" required /></span></label>
+            <label class="login-field" for="password">Password<span class="login-input"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" /></svg><input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required /><button class="password-toggle" id="password-toggle" type="button" aria-label="Show password">Show</button></span></label>
+            <div class="login-error" id="login-error" role="alert" aria-live="polite"></div>
+            <button class="button button-primary login-submit" id="login-submit" type="submit"><span>Sign in</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>
+          </form>
+
+          <div class="demo-divider"><span></span><small>OR TRY THE DEMO</small><span></span></div>
+          <div class="demo-access">
+            <div><strong>Explore the demo workspace</strong><small>Use the preconfigured analyst account.</small></div>
+            <button class="demo-button" id="demo-login" type="button">Fill demo details</button>
+          </div>
+          <p class="account-switch" id="account-switch">
+            Need an account?
+            <button id="register-toggle" type="button">Create a user account</button>
+          </p>
+          <p class="login-legal">By continuing, you’re accessing a demo application. No real payments are processed.</p>
+        </div>
+      </section>
+    </main>
+    <script src="/static/login.js" defer></script>
+  </body>
+</html>

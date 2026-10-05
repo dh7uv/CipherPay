@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
+
+from ..dependencies import require_analyst
 
 router = APIRouter()
 
 
 @router.get("/dashboard")
-async def dashboard(request: Request):
+async def dashboard(request: Request, _: dict = Depends(require_analyst)):
     store = request.app.state.store
     transactions = store["transactions"]
     if not transactions:

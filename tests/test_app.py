@@ -21,6 +21,7 @@ def test_transaction_submission():
 
     transaction_response = client.post(
         "/api/v1/transactions/submit",
+        headers={"Authorization": f"Bearer {register_response.json()['token']}"},
         json={
             "user_id": register_response.json()["user_id"],
             "amount": 2400,

@@ -1,37 +1,72 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
+from typing import Any
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
 
+from ..config import get_settings
+from ..database import persist_document
+from ..dependencies import get_current_user
 from ..services.audit_service import log_event
-from ..services.crypto_service import encrypt_value, sign_hmac
+from ..services.crypto_service import encrypt_value, sign_transaction, verify_transaction_integrity
 from ..services.fraud_engine import score_transaction
+from ..services.redis_service import redis_service
+from ..services.transaction_integrity import load_transaction_for_verification
 
 router = APIRouter()
+settings = get_settings()
 
 
 class TransactionCreate(BaseModel):
-    user_id: str
-    amount: float
-    currency: str = "USD"
-    merchant: str
-    device_id: str
-    location: str
+    user_id: str = Field(min_length=1, max_length=128)
+    amount: float = Field(gt=0, allow_inf_nan=False)
+    currency: str = Field(default="USD", pattern="^[A-Z]{3}$")
+    merchant: str = Field(min_length=1, max_length=120)
+    device_id: str = Field(min_length=1, max_length=128)
+    location: str = Field(min_length=1, max_length=120)
 
 
 @router.post("/submit")
-async def submit_transaction(request: Request, payload: TransactionCreate):
+async def submit_transaction(
+    request: Request,
+    payload: TransactionCreate,
+    current_user: dict[str, Any] = Depends(get_current_user),
+):
     store = request.app.state.store
+
+    if current_user["role"] != "analyst" and payload.user_id != current_user["_id"]:
+        raise HTTPException(status_code=403, detail="Users can only submit their own transactions")
 
     if not any(user["_id"] == payload.user_id for user in store["users"]):
         raise HTTPException(status_code=404, detail="User not found")
 
-    risk_data = score_transaction(payload.model_dump())
+    rate_limit_key = f"ratelimit:{current_user['_id']}:transactions_submit"
+    if not redis_service.allow_request(
+        rate_limit_key,
+        settings.redis_rate_limit,
+        settings.redis_rate_window_seconds,
+    ):
+        await log_event(store, "TRANSACTION_SUBMITTED", current_user["_id"], "", "FAILURE")
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Transaction submission rate limit exceeded",
+            headers={"Retry-After": str(settings.redis_rate_window_seconds)},
+        )
+
     transaction_id = f"txn_{uuid4().hex[:12]}"
+    activity = redis_service.record_transaction(
+        payload.user_id,
+        payload.device_id,
+        transaction_id,
+    )
+    risk_data = score_transaction(
+        payload.model_dump(),
+        velocity_count=activity["velocity_count"],
+        device_activity_count=activity["device_activity_count"],
+    )
     transaction_payload = {
         "transaction_id": transaction_id,
         "user_id": payload.user_id,
@@ -46,10 +81,11 @@ async def submit_transaction(request: Request, payload: TransactionCreate):
         "risk_reasons": risk_data["risk_reasons"],
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    signature = sign_hmac(json.dumps(transaction_payload, sort_keys=True))
+    signature = sign_transaction(transaction_payload)
     transaction = {**transaction_payload, "integrity_hmac": signature}
+    await persist_document("transactions", transaction)
     store["transactions"].append(transaction)
-    log_event(store, "TRANSACTION_SUBMITTED", payload.user_id, transaction_id, "SUCCESS")
+    await log_event(store, "TRANSACTION_SUBMITTED", payload.user_id, transaction_id, "SUCCESS")
 
     if risk_data["risk_category"] in {"High", "Medium"}:
         alert = {
@@ -61,11 +97,70 @@ async def submit_transaction(request: Request, payload: TransactionCreate):
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
+        await persist_document("alerts", alert)
         store["alerts"].append(alert)
 
     return {"transaction": transaction, "risk": risk_data}
 
 
 @router.get("/")
-async def list_transactions(request: Request):
-    return {"transactions": request.app.state.store["transactions"]}
+async def list_transactions(
+    request: Request,
+    limit: int = Query(default=50, ge=1, le=100),
+    skip: int = Query(default=0, ge=0),
+    risk_category: str | None = Query(default=None, pattern="^(Low|Medium|High)$"),
+    transaction_status: str | None = Query(default=None, alias="status"),
+    current_user: dict[str, Any] = Depends(get_current_user),
+):
+    transactions = list(reversed(request.app.state.store["transactions"]))
+    if current_user["role"] != "analyst":
+        transactions = [item for item in transactions if item["user_id"] == current_user["_id"]]
+    if risk_category:
+        transactions = [item for item in transactions if item["risk_category"] == risk_category]
+    if transaction_status:
+        transactions = [item for item in transactions if item["status"] == transaction_status]
+    total = len(transactions)
+    return {"transactions": transactions[skip:skip + limit], "total": total, "limit": limit, "skip": skip}
+
+
+@router.get("/{transaction_id}")
+async def get_transaction(
+    request: Request,
+    transaction_id: str,
+    current_user: dict[str, Any] = Depends(get_current_user),
+):
+    transaction = await load_transaction_for_verification(
+        request.app.state.store,
+        transaction_id,
+    )
+    if transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if current_user["role"] != "analyst" and transaction["user_id"] != current_user["_id"]:
+        raise HTTPException(status_code=403, detail="You can only access your own transactions")
+    return {"transaction": transaction}
+
+
+@router.post("/{transaction_id}/verify-integrity")
+async def verify_transaction(
+    request: Request,
+    transaction_id: str,
+    current_user: dict[str, Any] = Depends(get_current_user),
+):
+    if current_user["role"] != "analyst":
+        raise HTTPException(status_code=403, detail="Analyst access required")
+    transaction = await load_transaction_for_verification(
+        request.app.state.store,
+        transaction_id,
+    )
+    if transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    valid = verify_transaction_integrity(transaction)
+    await log_event(
+        request.app.state.store,
+        "INTEGRITY_CHECK",
+        current_user["_id"],
+        transaction_id,
+        "SUCCESS" if valid else "FAILURE",
+    )
+    return {"transaction_id": transaction_id, "integrity_valid": valid}
