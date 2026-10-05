@@ -21,6 +21,39 @@ def register_user(email: str, role: str = "user") -> dict:
     return response.json()
 
 
+def test_login_accepts_case_insensitive_email_and_returns_authentication_token():
+    user = register_user("login-check@example.com")
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "  LOGIN-CHECK@EXAMPLE.COM ", "password": "securepass"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["user_id"] == user["user_id"]
+    assert response.json()["email"] == "login-check@example.com"
+    assert response.json()["role"] == "user"
+    assert response.json()["token"]
+
+
+def test_login_rejects_wrong_password_and_suspended_account():
+    user = register_user("login-denied@example.com")
+
+    wrong_password = client.post(
+        "/api/v1/auth/login",
+        json={"email": user["email"], "password": "incorrect"},
+    )
+    stored_user = next(item for item in app.state.store["users"] if item["_id"] == user["user_id"])
+    stored_user["status"] = "suspended"
+    suspended = client.post(
+        "/api/v1/auth/login",
+        json={"email": user["email"], "password": "securepass"},
+    )
+
+    assert wrong_password.status_code == 401
+    assert suspended.status_code == 403
+
+
 def transaction_payload(user_id: str) -> dict:
     return {
         "user_id": user_id,

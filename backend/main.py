@@ -33,19 +33,25 @@ async def lifespan(_: FastAPI):
 async def seed_demo_data(store: dict[str, list[dict]]):
     now = datetime.now(timezone.utc).isoformat()
     user = next(
-        (
-            existing for existing in store["users"]
-            if existing.get("email") == "demo@cipherpay.local"
-        ),
+        (existing for existing in store["users"] if existing.get("email") == "demo@cipherpay.local"),
         None,
-    ) or {
-        "_id": "demo-user",
-        "email": "demo@cipherpay.local",
-        "password_hash": hash_password("demo123"),
-        "role": "analyst",
-        "status": "active",
-        "created_at": now,
-    }
+    )
+    if user is None:
+        user = {
+            "_id": "demo-user",
+            "email": "demo@cipherpay.local",
+            "password_hash": hash_password("demo123"),
+            "role": "analyst",
+            "status": "active",
+            "created_at": now,
+        }
+    else:
+        user.update(
+            password_hash=hash_password("demo123"),
+            role="analyst",
+            status="active",
+        )
+        await persist_document("users", user)
     transaction_payload = {
         "transaction_id": "txn_demo_001",
         "user_id": user["_id"],

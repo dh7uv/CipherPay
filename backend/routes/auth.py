@@ -9,7 +9,7 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Request
 from fastapi import status as http_status
 from pymongo.errors import DuplicateKeyError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..config import get_settings
 from ..database import persist_document
@@ -30,6 +30,11 @@ class UserRegister(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     role: Literal["user"] = "user"
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: Any) -> Any:
+        return value.strip().lower() if isinstance(value, str) else value
+
 
 class UserLogin(BaseModel):
     email: str = Field(
@@ -38,6 +43,11 @@ class UserLogin(BaseModel):
         pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
     )
     password: str = Field(min_length=1, max_length=128)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: Any) -> Any:
+        return value.strip().lower() if isinstance(value, str) else value
 
 
 @router.post("/register")
