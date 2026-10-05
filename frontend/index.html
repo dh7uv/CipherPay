@@ -3,70 +3,59 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CipherPay Dashboard</title>
-    <link rel="stylesheet" href="styles.css" />
+    <meta name="description" content="CryptaGuard real-time fraud detection and transaction monitoring console" />
+    <title>CryptaGuard | Risk Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/guest.css" />
+    <link rel="stylesheet" href="/static/advanced.css" />
   </head>
   <body>
-    <div class="container">
-      <header class="topbar">
-        <h1>CipherPay</h1>
-        <span class="tag">Fraud Monitoring Console</span>
-      </header>
+    <div class="app-shell">
+      <div class="mobile-scrim" id="mobile-scrim"></div>
+      <aside class="sidebar" id="sidebar">
+        <div class="brand"><span class="brand-mark">CG</span><span><b>Crypta</b>Guard<small>Risk intelligence</small></span></div>
+        <div class="tenant-chip"><span class="tenant-mark">D</span><span><small>Workspace</small><strong>Demo Financial</strong></span><span class="chevron">⌄</span></div>
+        <p class="nav-group-label">Workspace</p>
+        <nav class="nav" aria-label="Primary navigation">
+          <button class="nav-item active" data-view="overview"><span class="nav-icon">▦</span>Overview</button>
+          <button class="nav-item" data-view="transactions"><span class="nav-icon">▤</span>Transactions</button>
+          <button class="nav-item" data-view="alerts"><span class="nav-icon">!</span>Fraud alerts <span id="nav-alert-count">0</span></button>
+          <p class="nav-group-label">Intelligence</p>
+          <button class="nav-item" data-view="analytics"><span class="nav-icon">⌁</span>Analytics &amp; ML</button>
+          <p class="nav-group-label">Governance</p>
+          <button class="nav-item" data-view="security"><span class="nav-icon">◈</span>Security &amp; integrity</button>
+          <button class="nav-item" data-view="audit"><span class="nav-icon">≡</span>Audit trail</button>
+        </nav>
+        <div class="sidebar-footer"><div class="environment-label"><span class="live-dot"></span><strong>Development workspace</strong></div><small>Synthetic data policy</small><small>Build 1.0.0 · Secure mode</small></div>
+      </aside>
 
-      <main class="grid">
-        <section class="panel form-panel">
-          <h2>Submit transaction</h2>
-          <form id="transaction-form">
-            <label>
-              User ID
-              <input type="text" id="user_id" value="demo-user" required />
-            </label>
-            <label>
-              Amount
-              <input type="number" id="amount" value="2500" min="0" step="0.01" required />
-            </label>
-            <label>
-              Currency
-              <select id="currency">
-                <option>USD</option>
-                <option>EUR</option>
-                <option>GBP</option>
-                <option>JPY</option>
-              </select>
-            </label>
-            <label>
-              Merchant
-              <input type="text" id="merchant" value="crypto" required />
-            </label>
-            <label>
-              Device ID
-              <input type="text" id="device_id" value="dev-1234" required />
-            </label>
-            <label>
-              Location
-              <input type="text" id="location" value="Berlin" required />
-            </label>
-            <button type="submit">Submit</button>
-          </form>
-        </section>
+      <main class="main-content">
+        <header class="topbar"><button class="mobile-menu" id="mobile-menu" aria-label="Open navigation">☰</button><div class="breadcrumb"><span>CryptaGuard</span><i>/</i><strong id="page-title">Overview</strong></div><div class="topbar-meta"><span class="date-stamp">Monday, 05 October 2026</span><span id="session-status" class="status-pill">Signed out</span><button class="icon-button" aria-label="Notifications">◎<span class="notification-dot"></span></button><button class="profile-button" id="profile-button"><span class="avatar">A</span><span class="analyst-name"><strong>Analyst</strong><small>Risk operations</small></span><span>⌄</span></button><div class="profile-menu" id="profile-menu"><strong>Demo Analyst</strong><small>analyst · active session</small><button id="logout-button">Sign out</button></div></div></header>
 
-        <section class="panel stats-panel">
-          <h2>Dashboard</h2>
-          <div class="metrics">
-            <div class="metric"><span id="total_txn">0</span><small>Total transactions</small></div>
-            <div class="metric"><span id="avg_risk">0</span><small>Avg risk</small></div>
-            <div class="metric"><span id="alerts_count">0</span><small>Alerts</small></div>
-          </div>
-          <div id="status-box" class="status-box">Loading...</div>
-        </section>
+        <section class="panel login-panel" id="login-panel"><p class="section-kicker">Secure workspace access</p><h2>Sign in to monitor risk</h2><p class="muted">Use analyst credentials for full controls, or enter as a read-only guest.</p><form id="login-form" class="login-form"><label>Email<input type="email" id="login-email" value="demo@cipherpay.local" autocomplete="email" required /></label><label>Password<input type="password" id="login-password" value="demo123" autocomplete="current-password" required /></label><button class="primary-button" type="submit">Sign in securely <span>→</span></button></form><div class="login-divider"><span>or</span></div><button class="guest-button" id="guest-login" type="button">Continue as guest <small>Read-only access</small></button></section>
+
+        <div id="dashboard-content" hidden>
+          <section id="overview-view" class="view active-view">
+            <div class="hero-row"><div><div class="hero-kicker"><span class="pulse-dot"></span>Live monitoring</div><h2>Transaction monitoring</h2><p class="muted">Review synthetic payment activity, risk exposure, and outstanding alerts.</p></div><div class="hero-actions"><span class="refresh-note">Last sync<br><strong>Just now</strong></span><button class="primary-button" data-action="simulate">New simulation <span>+</span></button></div></div>
+            <div class="metric-grid"><article class="metric-card"><span class="metric-label">Transactions processed</span><strong id="total_txn">0</strong><span class="metric-note trend-up">↑ 12.4% <em>vs last period</em></span></article><article class="metric-card accent"><span class="metric-label">Average risk score</span><strong id="avg_risk">0</strong><span class="metric-note">Out of 100</span></article><article class="metric-card"><span class="metric-label">Active fraud alerts</span><strong id="alerts_count">0</strong><span class="metric-note" id="alert-note">Needs review</span></article><article class="metric-card"><span class="metric-label">System integrity</span><strong>100%</strong><span class="metric-note verified-text">● All records verified</span></article></div>
+            <div class="system-strip" aria-label="Infrastructure status"><span class="system-label">System status</span><span class="system-status"><i id="mongo-dot" class="status-dot pending"></i><strong>MongoDB</strong><small id="mongo-status">Checking</small></span><span class="system-status"><i id="redis-dot" class="status-dot pending"></i><strong>Redis velocity</strong><small id="redis-status">Checking</small></span><span class="system-status"><i class="status-dot online"></i><strong>Crypto controls</strong><small>Protected</small></span></div>
+            <div class="content-grid quick-grid"><article class="panel quick-sim-panel"><div class="panel-heading"><div><p class="section-kicker">Rapid assessment</p><h3>Quick simulation</h3><p class="panel-subtitle">Test a payment against active detection rules.</p></div><span class="shortcut-hint">⌘ K</span></div><form id="quick-form"><div class="form-grid compact-form"><label>User ID<input id="quick-user" value="demo-user" required /></label><label>Amount<input id="quick-amount" type="number" value="2400" min="0.01" step="0.01" required /></label><label>Merchant<input id="quick-merchant" value="crypto" required /></label><label>Location<input id="quick-location" value="Berlin" /></label></div><button class="secondary-button" type="submit">Run risk assessment <span>→</span></button></form><div id="quick-result" class="quick-result hidden"></div></article><article class="panel decision-panel"><div class="panel-heading"><div><p class="section-kicker">Decision engine</p><h3>Transaction outcomes</h3></div><span class="legend-total">All traffic</span></div><div class="decision-layout"><div id="decision-donut" class="decision-donut"><strong id="decision-total">0</strong><small>transactions</small></div><div id="decision-legend" class="decision-legend"></div></div></article></div>
+            <div class="content-grid lower-analytics"><article class="panel"><div class="panel-heading"><div><p class="section-kicker">Explainable detection</p><h3>Top risk signals</h3></div><button class="text-button" data-view-target="analytics">View analytics</button></div><div id="signal-list" class="signal-list"></div></article><article class="panel"><div class="panel-heading"><div><p class="section-kicker">Latest activity</p><h3>Recent transactions</h3></div><button class="text-button" data-view-target="transactions">View ledger</button></div><div id="recent-activity" class="activity-list"></div></article></div>
+          </section>
+          <section id="transactions-view" class="view"><div class="view-intro"><div><p class="section-kicker">Ledger explorer</p><h2>Transactions</h2><p class="muted">Search, filter, and inspect every synthetic payment record.</p></div><button class="primary-button" data-action="simulate">Simulate transaction <span>+</span></button></div><article class="panel"><div class="filter-bar"><label>Search<input id="transaction-search" placeholder="Transaction ID, user, merchant..." /></label><label>Status<select id="status-filter"><option value="">All statuses</option><option>Approved</option><option>Under Review</option><option>Declined</option></select></label><label>Risk<select id="risk-filter"><option value="">All risk levels</option><option>Low</option><option>Medium</option><option>High</option></select></label><label>From<input id="date-from" type="date" /></label><label>To<input id="date-to" type="date" /></label><button class="secondary-button" id="refresh-transactions">Refresh</button></div><div id="transactions-list" class="table-wrap"></div></article></section>
+          <section id="alerts-view" class="view"><div class="view-intro"><div><p class="section-kicker">Investigation workspace</p><h2>Fraud alerts</h2><p class="muted">Triage suspicious activity and document analyst decisions.</p></div><span class="view-status"><i class="status-dot online"></i>Queue live</span></div><article class="panel"><div id="alerts-table" class="table-wrap"></div></article></section>
+          <section id="analytics-view" class="view"><div class="view-intro"><div><p class="section-kicker">Model observability</p><h2>Analytics &amp; ML metrics</h2><p class="muted">Understand risk movement, detection behavior, and merchant exposure.</p></div></div><div class="analytics-grid"><article class="panel trend-panel"><div class="panel-heading"><div><p class="section-kicker">Seven-day telemetry</p><h3>Risk activity trend</h3></div><span class="legend-total">Avg risk</span></div><div id="risk-trend" class="trend-chart"></div><div class="chart-axis"><span>6 days ago</span><span>Today</span></div></article><article class="panel"><div class="panel-heading"><div><p class="section-kicker">Portfolio health</p><h3>Risk distribution</h3></div></div><div id="risk-bars" class="risk-bars"></div><div class="chart-legend"><span><i class="dot low"></i>Low</span><span><i class="dot medium"></i>Medium</span><span><i class="dot high"></i>High</span></div></article></div><div class="content-grid lower-analytics"><article class="panel"><div class="panel-heading"><div><p class="section-kicker">Merchant intelligence</p><h3>Exposure by merchant</h3></div><span class="legend-total">Avg risk</span></div><div id="merchant-list" class="merchant-list"></div></article><article class="panel"><div class="panel-heading"><div><p class="section-kicker">Security posture</p><h3>Control coverage</h3></div></div><div class="coverage-metrics large-coverage"><span><strong id="encrypted-coverage">0%</strong><small>Encrypted fields</small></span><span><strong id="integrity-coverage">0%</strong><small>HMAC coverage</small></span><span><strong id="audit-events">0</strong><small>Audit events</small></span></div><div class="model-note">ML model status <strong>Rule fallback active</strong></div></article></div></section>
+          <section id="security-view" class="view"><div class="view-intro"><div><p class="section-kicker">Cryptographic controls</p><h2>Security &amp; integrity</h2><p class="muted">Verify that transaction records have not been modified after persistence.</p></div></div><div class="security-layout"><article class="panel integrity-panel"><div class="security-icon">◈</div><h3>HMAC integrity auditor</h3><p class="muted">Enter a transaction ID to compare its stored signature against a canonical payload using constant-time comparison.</p><form id="integrity-form"><label>Transaction ID<input id="integrity-id" placeholder="txn_..." required /></label><button class="primary-button" type="submit">Verify record integrity <span>→</span></button></form><div id="integrity-result" class="integrity-result hidden"></div></article><article class="security-explainer"><div class="security-check"><span>✓</span><div><strong>AES-256-GCM encryption</strong><small>Device and location metadata protected with unique nonces.</small></div></div><div class="security-check"><span>✓</span><div><strong>HMAC-SHA-256 signatures</strong><small>Transaction identity, ownership, amount, currency, and timestamp signed.</small></div></div><div class="security-check"><span>✓</span><div><strong>Immutable audit trail</strong><small>Analyst actions recorded with actor, resource, timestamp, and outcome.</small></div></div></article></div></section>
+          <section id="audit-view" class="view"><div class="view-intro"><div><p class="section-kicker">Governance</p><h2>Audit trail</h2><p class="muted">Every important action is recorded for traceability.</p></div></div><article class="panel"><div id="audit-table" class="table-wrap"></div></article></section>
+        </div>
       </main>
-
-      <section class="panel">
-        <h2>Recent alerts</h2>
-        <div id="alerts-list" class="list"></div>
-      </section>
     </div>
-
-    <script src="app.js"></script>
+    <div class="modal-backdrop hidden" id="simulation-modal"><section class="modal"><div class="modal-heading"><div><p class="section-kicker">Synthetic test harness</p><h2>Simulate transaction</h2><p class="muted">Run a payment through the live fraud engine.</p></div><button class="close-button" data-close-modal aria-label="Close">×</button></div><form id="simulation-form"><div class="form-grid"><label>User ID<input id="sim-user" value="demo-user" required /></label><label>Amount<input id="sim-amount" type="number" value="2400" min="0.01" step="0.01" required /></label><label>Currency<select id="sim-currency"><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option></select></label><label>Merchant<input id="sim-merchant" value="crypto" required /></label><label>Device ID<input id="sim-device" value="dev-2048" /></label><label>Location<input id="sim-location" value="Berlin" /></label></div><button class="primary-button full-width" type="submit">Submit for scoring <span>→</span></button></form><div id="simulation-result" class="quick-result hidden"></div></section></div>
+    <aside class="inspector-drawer" id="inspector-drawer"><div class="drawer-heading"><div><p class="section-kicker">Record inspector</p><h2>Transaction details</h2></div><button class="close-button" id="close-inspector" aria-label="Close inspector">×</button></div><div id="inspector-content"></div></aside>
+    <div class="toast-stack" id="toast-stack"></div>
+    <script src="/static/app.js"></script>
   </body>
 </html>

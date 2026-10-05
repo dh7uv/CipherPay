@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-import json
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from fastapi import APIRouter, HTTPException, Request
-
+from ..dependencies import require_roles
 from ..services.audit_service import log_event
-from ..services.crypto_service import verify_hmac
+from ..services.crypto_service import verify_transaction_hmac
 
 router = APIRouter()
 
 
 @router.get("/audit-logs")
-async def audit_logs(request: Request):
-    return {"audit_logs": request.app.state.store["audit_logs"]}
+async def audit_logs(request: Request, _: dict = Depends(require_roles("analyst", "guest"))):
+    logs = request.app.state.store["audit_logs"]
+    return {"audit_logs": list(reversed(logs)), "total": len(logs)}
 
 
 @router.get("/integrity-check/{transaction_id}")
-async def integrity_check(request: Request, transaction_id: str):
+async def integrity_check(request: Request, transaction_id: str, analyst: dict = Depends(require_roles("analyst", "guest"))):
     transaction = next(
         (item for item in request.app.state.store["transactions"] if item["transaction_id"] == transaction_id),
         None,
@@ -24,20 +24,6 @@ async def integrity_check(request: Request, transaction_id: str):
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    payload = {
-        "transaction_id": transaction["transaction_id"],
-        "user_id": transaction["user_id"],
-        "amount": transaction["amount"],
-        "currency": transaction["currency"],
-        "merchant": transaction["merchant"],
-        "device_id": transaction["device_id"],
-        "location": transaction["location"],
-        "status": transaction["status"],
-        "risk_score": transaction["risk_score"],
-        "risk_category": transaction["risk_category"],
-        "risk_reasons": transaction["risk_reasons"],
-        "created_at": transaction["created_at"],
-    }
-    valid = verify_hmac(json.dumps(payload, sort_keys=True), transaction["integrity_hmac"])
-    log_event(request.app.state.store, "INTEGRITY_CHECK", "system", transaction_id, "SUCCESS" if valid else "FAILURE")
+    valid = verify_transaction_hmac(transaction)
+    await log_event(request.app.state.store, "INTEGRITY_CHECK", analyst["_id"], transaction_id, "SUCCESS" if valid else "FAILURE")
     return {"transaction_id": transaction_id, "integrity_valid": valid}

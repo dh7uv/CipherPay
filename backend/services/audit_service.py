@@ -3,8 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
+from ..database import persist_document
 
-def log_event(store: Dict[str, List[Dict[str, Any]]], action: str, actor_id: str, resource_id: str, outcome: str) -> Dict[str, Any]:
+
+async def log_event(store: Dict[str, List[Dict[str, Any]]], action: str, actor_id: str, resource_id: str, outcome: str) -> Dict[str, Any]:
     event = {
         "log_id": f"log_{len(store['audit_logs']) + 1}",
         "actor_id": actor_id,
@@ -14,4 +16,5 @@ def log_event(store: Dict[str, List[Dict[str, Any]]], action: str, actor_id: str
         "outcome": outcome,
     }
     store["audit_logs"].append(event)
+    await persist_document("audit_logs", event)
     return event

@@ -1,6 +1,9 @@
-__pycache__/
-*.pyc
-.venv/
 .env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
 .pytest_cache/
 .coverage
+.DS_Store
+ml/model.joblib
