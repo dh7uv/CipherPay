@@ -10,6 +10,7 @@ const title = document.getElementById('login-title');
 const subtitle = document.querySelector('.login-form-subtitle');
 const accountSwitch = document.getElementById('account-switch');
 const registerToggle = document.getElementById('register-toggle');
+const backToLogin = document.getElementById('login-back');
 let isRegistering = false;
 
 if (sessionStorage.getItem(SESSION_KEY)) {
@@ -31,10 +32,11 @@ document.getElementById('password-toggle').addEventListener('click', (event) => 
   button.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
 });
 
-registerToggle.addEventListener('click', () => {
-  isRegistering = !isRegistering;
+function setRegistrationMode(registering) {
+  isRegistering = registering;
   document.querySelector('.demo-divider').hidden = isRegistering;
   document.querySelector('.demo-access').hidden = isRegistering;
+  backToLogin.hidden = !isRegistering;
   document.querySelector('.login-form-wrap > .section-kicker').textContent = isRegistering
     ? 'GET STARTED'
     : 'WELCOME BACK';
@@ -47,7 +49,10 @@ registerToggle.addEventListener('click', () => {
   registerToggle.textContent = isRegistering ? 'Sign in instead' : 'Create a user account';
   passwordInput.minLength = isRegistering ? 8 : 1;
   errorMessage.textContent = '';
-});
+}
+
+registerToggle.addEventListener('click', () => setRegistrationMode(!isRegistering));
+backToLogin.addEventListener('click', () => setRegistrationMode(false));
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();

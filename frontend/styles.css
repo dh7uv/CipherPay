@@ -237,6 +237,10 @@ tbody tr:last-child td { border-bottom: 0; }
 .login-story-footer span { margin: 0 4px; color: #4cc0aa; }
 .login-panel { display: grid; min-width: 0; place-items: center; padding: 42px; background: #fff; }
 .login-form-wrap { width: min(100%, 370px); }
+.login-back-button { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 17px; padding: 5px 0; border: 0; color: #788698; background: transparent; font-size: 10px; font-weight: 600; cursor: pointer; }
+.login-back-button:hover { color: #168879; }
+.login-back-button svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.login-back-button[hidden] { display: none; }
 .login-form-wrap > .section-kicker { color: #258d80; }
 .login-form-wrap > h2 { margin-top: 9px; color: #243147; font: 700 24px/1.3 "Manrope", sans-serif; letter-spacing: -.7px; }
 .login-form-subtitle { margin-top: 7px; color: #8490a0; font-size: 11px; }
