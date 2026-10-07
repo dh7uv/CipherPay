@@ -52,6 +52,8 @@ Approve the Windows elevation prompt if requested. The Memurai service is config
 
 Set `MONGO_URI`, `MONGO_DB_NAME`, `REDIS_HOST`, `REDIS_PORT`, `SEED_DEMO_DATA`, and (if needed) `REDIS_PASSWORD` in `.env`. For the default Memurai setup, use `REDIS_HOST=127.0.0.1` and `REDIS_PORT=6379`. Set `FRAUD_BLACKLISTED_DEVICE_IDS` to a comma-separated list of synthetic device identifiers to flag. Start MongoDB and Memurai before the API so both connections are available at startup. MongoDB and Redis availability are checked when the app starts.
 
+After startup, confirm both backend connections at <http://127.0.0.1:8000/api/v1/health>; `database_connected` and `redis_connected` should both be `true`.
+
 Start the API and dashboard:
 
 ```powershell
