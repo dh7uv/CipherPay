@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
 from ..config import get_settings
-from ..database import persist_document
+from ..database import persist_document, update_document
 from ..dependencies import get_current_user
 from ..services.audit_service import log_event
 from ..services.crypto_service import encrypt_value, sign_transaction, verify_transaction_integrity
@@ -27,6 +27,10 @@ class TransactionCreate(BaseModel):
     merchant: str = Field(min_length=1, max_length=120)
     device_id: str = Field(min_length=1, max_length=128)
     location: str = Field(min_length=1, max_length=120)
+
+
+class TransactionDecision(BaseModel):
+    decision: Literal["Approved", "Declined"]
 
 
 @router.post("/submit")
@@ -163,4 +167,76 @@ async def verify_transaction(
         transaction_id,
         "SUCCESS" if valid else "FAILURE",
     )
-    return {"transaction_id": transaction_id, "integrity_valid": valid}
+    manual_review_available = (
+        valid
+        and transaction.get("status") == "Under Review"
+        and transaction.get("risk_score", 0) >= 70
+    )
+    return {
+        "transaction_id": transaction_id,
+        "integrity_valid": valid,
+        "manual_review_available": manual_review_available,
+    }
+
+
+@router.post("/{transaction_id}/decision")
+async def decide_transaction(
+    request: Request,
+    transaction_id: str,
+    payload: TransactionDecision,
+    current_user: dict[str, Any] = Depends(get_current_user),
+):
+    if current_user["role"] != "analyst":
+        raise HTTPException(status_code=403, detail="Analyst access required")
+
+    store = request.app.state.store
+    transaction = await load_transaction_for_verification(store, transaction_id)
+    if transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if not verify_transaction_integrity(transaction):
+        raise HTTPException(
+            status_code=409,
+            detail="Transaction integrity check failed; manual decision is not allowed",
+        )
+    if transaction.get("status") != "Under Review" or transaction.get("risk_score", 0) < 70:
+        raise HTTPException(
+            status_code=409,
+            detail="Manual decisions are only available for high-risk transactions under review",
+        )
+
+    decided_at = datetime.now(timezone.utc).isoformat()
+    transaction.update(
+        status=payload.decision,
+        reviewed_at=decided_at,
+        reviewed_by=current_user["_id"],
+    )
+    transaction["integrity_hmac"] = sign_transaction(transaction)
+    await update_document(
+        "transactions",
+        transaction_id,
+        {
+            "status": payload.decision,
+            "reviewed_at": decided_at,
+            "reviewed_by": current_user["_id"],
+            "integrity_hmac": transaction["integrity_hmac"],
+        },
+    )
+
+    stored_transaction = next(
+        (
+            item for item in store["transactions"]
+            if item.get("transaction_id") == transaction_id
+        ),
+        None,
+    )
+    if stored_transaction is not None:
+        stored_transaction.update(transaction)
+
+    await log_event(
+        store,
+        f"TRANSACTION_{payload.decision.upper()}",
+        current_user["_id"],
+        transaction_id,
+        "SUCCESS",
+    )
+    return {"transaction": transaction}

@@ -148,6 +148,15 @@ tbody tr:last-child td { border-bottom: 0; }
 .integrity-button:disabled { opacity: .65; cursor: wait; }
 .integrity-button.is-valid { border-color: #d8ede2; color: #29835f; background: #f0f8f3; cursor: default; }
 .integrity-button.is-invalid { border-color: #f0d7d7; color: #b34f55; background: #fcf1f1; cursor: default; }
+.transaction-review-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.transaction-review-actions[hidden] { display: none; }
+.decision-button { padding: 4px 6px; border: 1px solid transparent; border-radius: 5px; font-size: 8px; font-weight: 600; cursor: pointer; }
+.decision-button:disabled { opacity: .6; cursor: wait; }
+.decision-approved { border-color: #d8ede2; color: #29835f; background: #f0f8f3; }
+.decision-declined { border-color: #f0d7d7; color: #b34f55; background: #fcf1f1; }
+.decision-confirmation, .decision-error { max-width: 145px; white-space: normal; font-size: 8px; line-height: 1.4; }
+.decision-confirmation { color: #29835f; }
+.decision-error { color: #b34f55; }
 .empty-cell { height: 100px; color: #929cab; text-align: center; }
 .compact-heading { align-items: flex-start; padding-bottom: 4px; }
 .compact-heading h2 { font-size: 14px; }

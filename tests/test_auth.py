@@ -1,5 +1,6 @@
 import hashlib
 
+import pytest
 from fastapi.testclient import TestClient
 
 from backend.main import app
@@ -7,6 +8,7 @@ from backend.routes import auth as auth_routes
 from backend.routes import transactions as transaction_routes
 from backend.services import transaction_integrity
 from backend.services.auth_service import create_access_token, hash_password
+from backend.services.crypto_service import verify_transaction_integrity
 from backend.services.redis_service import redis_service
 
 client = TestClient(app)
@@ -63,6 +65,127 @@ def transaction_payload(user_id: str) -> dict:
         "device_id": "device-test",
         "location": "Berlin",
     }
+
+
+@pytest.mark.parametrize("decision", ["Approved", "Declined"])
+def test_analyst_can_decide_high_risk_transaction_after_integrity_check(decision, monkeypatch):
+    analyst = {
+        "_id": "manual-review-analyst",
+        "email": "manual-review-analyst@example.com",
+        "password_hash": hash_password("securepass"),
+        "role": "analyst",
+        "status": "active",
+    }
+    app.state.store["users"].append(analyst)
+    persisted_decisions = []
+
+    async def record_decision(collection_name, transaction_id, changes):
+        persisted_decisions.append((collection_name, transaction_id, changes))
+
+    monkeypatch.setattr(transaction_routes, "update_document", record_decision)
+    headers = {"Authorization": f"Bearer {create_access_token(analyst['_id'])}"}
+    user = register_user("manual-review-owner@example.com")
+    submitted = client.post(
+        "/api/v1/transactions/submit",
+        headers={"Authorization": f"Bearer {user['token']}"},
+        json={
+            **transaction_payload(user["user_id"]),
+            "amount": 6000,
+            "merchant": "crypto",
+        },
+    )
+    transaction_id = submitted.json()["transaction"]["transaction_id"]
+
+    verification = client.post(
+        f"/api/v1/transactions/{transaction_id}/verify-integrity",
+        headers=headers,
+    )
+    decision_response = client.post(
+        f"/api/v1/transactions/{transaction_id}/decision",
+        headers=headers,
+        json={"decision": decision},
+    )
+    stored_transaction = next(
+        item for item in app.state.store["transactions"]
+        if item["transaction_id"] == transaction_id
+    )
+
+    assert submitted.json()["transaction"]["risk_score"] >= 70
+    assert verification.json()["integrity_valid"] is True
+    assert verification.json()["manual_review_available"] is True
+    assert decision_response.status_code == 200
+    assert decision_response.json()["transaction"]["status"] == decision
+    assert decision_response.json()["transaction"]["reviewed_by"] == analyst["_id"]
+    assert verify_transaction_integrity(stored_transaction)
+    assert len(persisted_decisions) == 1
+    collection_name, persisted_id, changes = persisted_decisions[0]
+    assert collection_name == "transactions"
+    assert persisted_id == transaction_id
+    assert changes["status"] == decision
+    assert changes["integrity_hmac"] == stored_transaction["integrity_hmac"]
+    assert any(
+        event["action"] == f"TRANSACTION_{decision.upper()}"
+        and event["resource_id"] == transaction_id
+        for event in app.state.store["audit_logs"]
+    )
+
+
+def test_manual_decision_rejects_tampered_and_non_high_risk_transactions():
+    analyst = {
+        "_id": "manual-review-guard-analyst",
+        "email": "manual-review-guard@example.com",
+        "password_hash": hash_password("securepass"),
+        "role": "analyst",
+        "status": "active",
+    }
+    app.state.store["users"].append(analyst)
+    headers = {"Authorization": f"Bearer {create_access_token(analyst['_id'])}"}
+    user = register_user("manual-review-guard-owner@example.com")
+    user_headers = {"Authorization": f"Bearer {user['token']}"}
+    low_risk = client.post(
+        "/api/v1/transactions/submit",
+        headers=user_headers,
+        json=transaction_payload(user["user_id"]),
+    ).json()["transaction"]
+    high_risk = client.post(
+        "/api/v1/transactions/submit",
+        headers=user_headers,
+        json={
+            **transaction_payload(user["user_id"]),
+            "amount": 6000,
+            "merchant": "crypto",
+        },
+    ).json()["transaction"]
+    next(
+        item for item in app.state.store["transactions"]
+        if item["transaction_id"] == high_risk["transaction_id"]
+    )["amount"] = 1
+
+    low_decision = client.post(
+        f"/api/v1/transactions/{low_risk['transaction_id']}/decision",
+        headers=headers,
+        json={"decision": "Declined"},
+    )
+    tampered_decision = client.post(
+        f"/api/v1/transactions/{high_risk['transaction_id']}/decision",
+        headers=headers,
+        json={"decision": "Approved"},
+    )
+
+    assert low_decision.status_code == 409
+    assert tampered_decision.status_code == 409
+
+
+def test_regular_user_cannot_make_manual_transaction_decision():
+    user = register_user("manual-review-user@example.com")
+
+    response = client.post(
+        "/api/v1/transactions/example/decision",
+        headers={"Authorization": f"Bearer {user['token']}"},
+        json={"decision": "Approved"},
+    )
+
+    assert response.status_code == 403
 
 
 def test_transaction_routes_require_a_valid_token():

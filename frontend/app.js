@@ -253,8 +253,30 @@ function renderTransactions() {
     verifyButton.type = 'button';
     verifyButton.textContent = 'Verify';
     verifyButton.setAttribute('aria-label', `Verify integrity for ${transaction.transaction_id}`);
-    verifyButton.addEventListener('click', () => verifyIntegrity(transaction.transaction_id, verifyButton));
     integrityCell.appendChild(verifyButton);
+
+    const reviewActions = document.createElement('div');
+    reviewActions.className = 'transaction-review-actions';
+    reviewActions.hidden = true;
+    ['Approved', 'Declined'].forEach((decision) => {
+      const decisionButton = document.createElement('button');
+      decisionButton.className = `decision-button decision-${decision.toLowerCase()}`;
+      decisionButton.type = 'button';
+      decisionButton.textContent = decision === 'Approved' ? 'Approve' : 'Reject';
+      decisionButton.addEventListener('click', () => updateTransactionDecision(
+        transaction,
+        decision,
+        reviewActions,
+        statusBadge,
+        verifyButton,
+      ));
+      reviewActions.appendChild(decisionButton);
+    });
+    integrityCell.appendChild(reviewActions);
+    verifyButton.addEventListener(
+      'click',
+      () => verifyIntegrity(transaction.transaction_id, verifyButton, reviewActions),
+    );
     row.appendChild(integrityCell);
     elements.transactionList.appendChild(row);
   });
@@ -346,7 +368,7 @@ async function updateAlertStatus(alertId, select) {
   }
 }
 
-async function verifyIntegrity(transactionId, button) {
+async function verifyIntegrity(transactionId, button, reviewActions) {
   button.disabled = true;
   button.textContent = 'Checking…';
   button.className = 'integrity-button';
@@ -358,6 +380,7 @@ async function verifyIntegrity(transactionId, button) {
     );
     button.textContent = result.integrity_valid ? 'Verified' : 'Tampered';
     button.classList.add(result.integrity_valid ? 'is-valid' : 'is-invalid');
+    reviewActions.hidden = !result.manual_review_available;
     button.title = result.integrity_valid
       ? 'Transaction signature matches its stored data.'
       : 'Stored transaction data does not match its original signature.';
@@ -366,6 +389,45 @@ async function verifyIntegrity(transactionId, button) {
     button.title = `Integrity check failed: ${error.message}`;
   } finally {
     button.disabled = false;
+  }
+}
+
+async function updateTransactionDecision(transaction, decision, actions, statusBadge, verifyButton) {
+  actions.querySelectorAll('button').forEach((button) => {
+    button.disabled = true;
+  });
+  verifyButton.disabled = true;
+
+  try {
+    const result = await requestJson(
+      `/transactions/${encodeURIComponent(transaction.transaction_id)}/decision`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision }),
+      },
+    );
+    transaction.status = result.transaction.status;
+    transaction.reviewed_at = result.transaction.reviewed_at;
+    transaction.reviewed_by = result.transaction.reviewed_by;
+    statusBadge.textContent = result.transaction.status;
+    statusBadge.className = `status-badge status-${result.transaction.status.toLowerCase()}`;
+    actions.replaceChildren();
+
+    const confirmation = document.createElement('span');
+    confirmation.className = 'decision-confirmation';
+    confirmation.textContent = `${decision} by analyst`;
+    actions.appendChild(confirmation);
+  } catch (error) {
+    actions.querySelectorAll('button').forEach((button) => {
+      button.disabled = false;
+    });
+    const message = document.createElement('span');
+    message.className = 'decision-error';
+    message.textContent = error.message;
+    actions.appendChild(message);
+  } finally {
+    verifyButton.disabled = false;
   }
 }
 
