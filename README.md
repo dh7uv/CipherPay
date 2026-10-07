@@ -42,7 +42,15 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 Use these values for `SECRET_KEY`, `ENCRYPTION_KEY`, and `HMAC_SECRET_KEY`, respectively. The AES key must be base64 that decodes to exactly 32 bytes. Do not commit `.env`.
 
-Set `MONGO_URI`, `MONGO_DB_NAME`, `REDIS_HOST`, `REDIS_PORT`, `SEED_DEMO_DATA`, and (if needed) `REDIS_PASSWORD` in `.env`. Set `FRAUD_BLACKLISTED_DEVICE_IDS` to a comma-separated list of synthetic device identifiers to flag. Start MongoDB/Redis before the API if you want their persistent/shared features. MongoDB availability is checked at app startup.
+For a Windows-native Redis-compatible service, install Memurai Developer from PowerShell:
+
+```powershell
+winget install --id Memurai.MemuraiDeveloper --exact --accept-package-agreements --accept-source-agreements
+```
+
+Approve the Windows elevation prompt if requested. The Memurai service is configured to start automatically and listens on `127.0.0.1:6379` by default. Confirm it is running with `Get-Service Memurai` or `& 'C:\Program Files\Memurai\memurai-cli.exe' -h 127.0.0.1 -p 6379 ping`.
+
+Set `MONGO_URI`, `MONGO_DB_NAME`, `REDIS_HOST`, `REDIS_PORT`, `SEED_DEMO_DATA`, and (if needed) `REDIS_PASSWORD` in `.env`. For the default Memurai setup, use `REDIS_HOST=127.0.0.1` and `REDIS_PORT=6379`. Set `FRAUD_BLACKLISTED_DEVICE_IDS` to a comma-separated list of synthetic device identifiers to flag. Start MongoDB and Memurai before the API so both connections are available at startup. MongoDB and Redis availability are checked when the app starts.
 
 Start the API and dashboard:
 
