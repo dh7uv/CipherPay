@@ -167,6 +167,34 @@ async def verify_transaction(
         transaction_id,
         "SUCCESS" if valid else "FAILURE",
     )
+    if valid:
+        verified_at = datetime.now(timezone.utc).isoformat()
+        transaction.update(
+            integrity_status="Verified",
+            integrity_verified_at=verified_at,
+            integrity_verified_by=current_user["_id"],
+        )
+        transaction["integrity_hmac"] = sign_transaction(transaction)
+        await update_document(
+            "transactions",
+            transaction_id,
+            {
+                "integrity_status": transaction["integrity_status"],
+                "integrity_verified_at": verified_at,
+                "integrity_verified_by": current_user["_id"],
+                "integrity_hmac": transaction["integrity_hmac"],
+            },
+        )
+        stored_transaction = next(
+            (
+                item for item in request.app.state.store["transactions"]
+                if item.get("transaction_id") == transaction_id
+            ),
+            None,
+        )
+        if stored_transaction is not None:
+            stored_transaction.update(transaction)
+
     manual_review_available = (
         valid
         and transaction.get("status") == "Under Review"
@@ -175,6 +203,7 @@ async def verify_transaction(
     return {
         "transaction_id": transaction_id,
         "integrity_valid": valid,
+        "integrity_status": "Verified" if valid else "Failed",
         "manual_review_available": manual_review_available,
     }
 

@@ -241,8 +241,8 @@ function renderTransactions() {
     const statusCell = document.createElement('td');
     const statusBadge = document.createElement('span');
     const statusClass = String(transaction.status || '').toLowerCase().replace(/\s+/g, '-');
-    statusBadge.className = `status-badge ${['approved', 'under-review', 'declined'].includes(statusClass) ? `status-${statusClass}` : ''}`;
-    statusBadge.textContent = transaction.status || 'Unknown';
+    statusBadge.className = `status-badge ${['approved', 'under-review', 'declined'].includes(statusClass) ? `status-${statusClass}` : ''}${transaction.integrity_status === 'Verified' ? ' status-verified' : ''}`;
+    statusBadge.textContent = formatTransactionStatus(transaction);
     statusCell.appendChild(statusBadge);
     row.appendChild(statusCell);
 
@@ -251,13 +251,23 @@ function renderTransactions() {
     const verifyButton = document.createElement('button');
     verifyButton.className = 'integrity-button';
     verifyButton.type = 'button';
-    verifyButton.textContent = 'Verify';
-    verifyButton.setAttribute('aria-label', `Verify integrity for ${transaction.transaction_id}`);
+    const isVerified = transaction.integrity_status === 'Verified';
+    verifyButton.textContent = isVerified ? 'Verified' : 'Verify';
+    verifyButton.disabled = isVerified;
+    if (isVerified) verifyButton.classList.add('is-valid');
+    verifyButton.setAttribute(
+      'aria-label',
+      `${isVerified ? 'Integrity verified for' : 'Verify integrity for'} ${transaction.transaction_id}`,
+    );
     integrityCell.appendChild(verifyButton);
 
     const reviewActions = document.createElement('div');
     reviewActions.className = 'transaction-review-actions';
-    reviewActions.hidden = true;
+    reviewActions.hidden = !(
+      isVerified
+      && transaction.status === 'Under Review'
+      && Number(transaction.risk_score) >= 70
+    );
     ['Approved', 'Declined'].forEach((decision) => {
       const decisionButton = document.createElement('button');
       decisionButton.className = `decision-button decision-${decision.toLowerCase()}`;
@@ -275,7 +285,7 @@ function renderTransactions() {
     integrityCell.appendChild(reviewActions);
     verifyButton.addEventListener(
       'click',
-      () => verifyIntegrity(transaction.transaction_id, verifyButton, reviewActions),
+      () => verifyIntegrity(transaction, verifyButton, reviewActions, statusBadge),
     );
     row.appendChild(integrityCell);
     elements.transactionList.appendChild(row);
@@ -345,6 +355,13 @@ function renderAlerts() {
   });
 }
 
+function formatTransactionStatus(transaction) {
+  if (transaction.integrity_status === 'Verified' && transaction.status === 'Under Review') {
+    return 'Verified · Under Review';
+  }
+  return transaction.status || 'Unknown';
+}
+
 async function updateAlertStatus(alertId, select) {
   const previousStatus = alerts.find((alert) => alert.alert_id === alertId)?.status || 'Open';
   select.disabled = true;
@@ -368,19 +385,24 @@ async function updateAlertStatus(alertId, select) {
   }
 }
 
-async function verifyIntegrity(transactionId, button, reviewActions) {
+async function verifyIntegrity(transaction, button, reviewActions, statusBadge) {
   button.disabled = true;
   button.textContent = 'Checking…';
   button.className = 'integrity-button';
 
   try {
     const result = await requestJson(
-      `/transactions/${encodeURIComponent(transactionId)}/verify-integrity`,
+      `/transactions/${encodeURIComponent(transaction.transaction_id)}/verify-integrity`,
       { method: 'POST' },
     );
     button.textContent = result.integrity_valid ? 'Verified' : 'Tampered';
     button.classList.add(result.integrity_valid ? 'is-valid' : 'is-invalid');
     reviewActions.hidden = !result.manual_review_available;
+    if (result.integrity_valid) {
+      transaction.integrity_status = result.integrity_status;
+      statusBadge.textContent = formatTransactionStatus(transaction);
+      statusBadge.classList.add('status-verified');
+    }
     button.title = result.integrity_valid
       ? 'Transaction signature matches its stored data.'
       : 'Stored transaction data does not match its original signature.';

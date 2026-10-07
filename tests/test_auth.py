@@ -77,12 +77,12 @@ def test_analyst_can_decide_high_risk_transaction_after_integrity_check(decision
         "status": "active",
     }
     app.state.store["users"].append(analyst)
-    persisted_decisions = []
+    persisted_updates = []
 
-    async def record_decision(collection_name, transaction_id, changes):
-        persisted_decisions.append((collection_name, transaction_id, changes))
+    async def record_update(collection_name, transaction_id, changes):
+        persisted_updates.append((collection_name, transaction_id, changes))
 
-    monkeypatch.setattr(transaction_routes, "update_document", record_decision)
+    monkeypatch.setattr(transaction_routes, "update_document", record_update)
     headers = {"Authorization": f"Bearer {create_access_token(analyst['_id'])}"}
     user = register_user("manual-review-owner@example.com")
     submitted = client.post(
@@ -100,6 +100,12 @@ def test_analyst_can_decide_high_risk_transaction_after_integrity_check(decision
         f"/api/v1/transactions/{transaction_id}/verify-integrity",
         headers=headers,
     )
+    verified_transaction = next(
+        item for item in app.state.store["transactions"]
+        if item["transaction_id"] == transaction_id
+    )
+    verified_signature = verified_transaction["integrity_hmac"]
+    verified_listing = client.get("/api/v1/transactions/", headers=headers)
     decision_response = client.post(
         f"/api/v1/transactions/{transaction_id}/decision",
         headers=headers,
@@ -112,13 +118,28 @@ def test_analyst_can_decide_high_risk_transaction_after_integrity_check(decision
 
     assert submitted.json()["transaction"]["risk_score"] >= 70
     assert verification.json()["integrity_valid"] is True
+    assert verification.json()["integrity_status"] == "Verified"
     assert verification.json()["manual_review_available"] is True
+    assert verified_transaction["integrity_status"] == "Verified"
+    assert verified_transaction["integrity_verified_by"] == analyst["_id"]
+    assert any(
+        item["transaction_id"] == transaction_id
+        and item["integrity_status"] == "Verified"
+        for item in verified_listing.json()["transactions"]
+    )
     assert decision_response.status_code == 200
     assert decision_response.json()["transaction"]["status"] == decision
+    assert decision_response.json()["transaction"]["integrity_status"] == "Verified"
     assert decision_response.json()["transaction"]["reviewed_by"] == analyst["_id"]
     assert verify_transaction_integrity(stored_transaction)
-    assert len(persisted_decisions) == 1
-    collection_name, persisted_id, changes = persisted_decisions[0]
+    assert len(persisted_updates) == 2
+    collection_name, persisted_id, verification_changes = persisted_updates[0]
+    assert collection_name == "transactions"
+    assert persisted_id == transaction_id
+    assert verification_changes["integrity_status"] == "Verified"
+    assert verification_changes["integrity_verified_by"] == analyst["_id"]
+    assert verification_changes["integrity_hmac"] == verified_signature
+    collection_name, persisted_id, changes = persisted_updates[1]
     assert collection_name == "transactions"
     assert persisted_id == transaction_id
     assert changes["status"] == decision
