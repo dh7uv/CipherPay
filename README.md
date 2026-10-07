@@ -86,7 +86,7 @@ All API routes use the `/api/v1` prefix.
 | `GET` | `/transactions/` | Authenticated; user-scoped or analyst-wide, with pagination and filters |
 | `GET` | `/transactions/{transaction_id}` | Authenticated; owner or analyst |
 | `POST` | `/transactions/{transaction_id}/verify-integrity` | Analyst; records a verified integrity status when valid |
-| `POST` | `/transactions/{transaction_id}/decision` | Analyst; approve/decline a verified High-risk (score ≥70) transaction under review |
+| `POST` | `/transactions/{transaction_id}/decision` | Analyst; approve/decline a verified transaction under review |
 | `GET` | `/analytics/dashboard` | Analyst |
 | `GET` | `/alerts/` | Analyst |
 | `PATCH` | `/alerts/{alert_id}` | Analyst; set status to `Open`, `Under Investigation`, `Resolved`, or `Dismissed` |

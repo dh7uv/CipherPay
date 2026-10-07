@@ -198,7 +198,6 @@ async def verify_transaction(
     manual_review_available = (
         valid
         and transaction.get("status") == "Under Review"
-        and transaction.get("risk_score", 0) >= 70
     )
     return {
         "transaction_id": transaction_id,
@@ -227,10 +226,13 @@ async def decide_transaction(
             status_code=409,
             detail="Transaction integrity check failed; manual decision is not allowed",
         )
-    if transaction.get("status") != "Under Review" or transaction.get("risk_score", 0) < 70:
+    if (
+        transaction.get("integrity_status") != "Verified"
+        or transaction.get("status") != "Under Review"
+    ):
         raise HTTPException(
             status_code=409,
-            detail="Manual decisions are only available for high-risk transactions under review",
+            detail="Only verified transactions under review can be manually decided",
         )
 
     decided_at = datetime.now(timezone.utc).isoformat()

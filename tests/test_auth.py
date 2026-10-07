@@ -197,6 +197,66 @@ def test_manual_decision_rejects_tampered_and_non_high_risk_transactions():
     assert tampered_decision.status_code == 409
 
 
+@pytest.mark.parametrize("decision", ["Approved", "Declined"])
+def test_analyst_can_decide_medium_risk_transaction_after_verification(decision, monkeypatch):
+    analyst = {
+        "_id": "medium-review-analyst",
+        "email": "medium-review-analyst@example.com",
+        "password_hash": hash_password("securepass"),
+        "role": "analyst",
+        "status": "active",
+    }
+    app.state.store["users"].append(analyst)
+    monkeypatch.setattr(
+        transaction_routes,
+        "score_transaction",
+        lambda payload, velocity_count, device_activity_count: {
+            "risk_score": 55,
+            "risk_category": "Medium",
+            "risk_reasons": [
+                f"Moderate transaction risk at {payload['merchant']}",
+                f"Velocity {velocity_count}",
+                f"Device activity {device_activity_count}",
+            ],
+        },
+    )
+    headers = {"Authorization": "Bearer " + create_access_token(analyst["_id"])}
+    user = register_user("medium-review-owner@example.com")
+    submitted = client.post(
+        "/api/v1/transactions/submit",
+        headers={"Authorization": "Bearer " + create_access_token(user["user_id"])},
+        json={
+            **transaction_payload(user["user_id"]),
+            "amount": 2500,
+            "merchant": "crypto",
+        },
+    ).json()["transaction"]
+    transaction_id = submitted["transaction_id"]
+
+    unverified_decision = client.post(
+        f"/api/v1/transactions/{transaction_id}/decision",
+        headers=headers,
+        json={"decision": decision},
+    )
+    verification = client.post(
+        f"/api/v1/transactions/{transaction_id}/verify-integrity",
+        headers=headers,
+    )
+    decision_response = client.post(
+        f"/api/v1/transactions/{transaction_id}/decision",
+        headers=headers,
+        json={"decision": decision},
+    )
+
+    assert submitted["risk_score"] < 70
+    assert submitted["status"] == "Under Review"
+    assert unverified_decision.status_code == 409
+    assert verification.json()["integrity_valid"] is True
+    assert verification.json()["manual_review_available"] is True
+    assert decision_response.status_code == 200
+    assert decision_response.json()["transaction"]["status"] == decision
+
+
 def test_regular_user_cannot_make_manual_transaction_decision():
     user = register_user("manual-review-user@example.com")
 

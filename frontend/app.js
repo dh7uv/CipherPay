@@ -266,13 +266,12 @@ function renderTransactions() {
     reviewActions.hidden = !(
       isVerified
       && transaction.status === 'Under Review'
-      && Number(transaction.risk_score) >= 70
     );
     ['Approved', 'Declined'].forEach((decision) => {
       const decisionButton = document.createElement('button');
       decisionButton.className = `decision-button decision-${decision.toLowerCase()}`;
       decisionButton.type = 'button';
-      decisionButton.textContent = decision === 'Approved' ? 'Approve' : 'Reject';
+      decisionButton.textContent = decision === 'Approved' ? 'Accept' : 'Reject';
       decisionButton.addEventListener('click', () => updateTransactionDecision(
         transaction,
         decision,
