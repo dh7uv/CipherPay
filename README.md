@@ -110,7 +110,7 @@ Send protected requests with `Authorization: Bearer <access-token>`. Alert state
 
 When MongoDB is available at startup, CipherPay creates indexes for unique user emails and transaction/alert/audit IDs; transaction owner/date, status/date, and risk score; alert status/date; and audit actor/timestamp. Collections are loaded into the application store on startup and mutations are persisted as they occur. If the database is unavailable, health reports that local storage is in use; restarting in that mode discards changes.
 
-Redis uses sorted sets for per-user transaction velocity (one-hour window) and device activity (24-hour window). Login, registration, and transaction submission limits use expiring counters. Device identifiers and login emails are hashed before they are used in Redis keys. When Redis is unavailable, equivalent process-local tracking is used and is not shared between workers.
+Redis uses sorted sets for per-user transaction velocity (one-hour window) and device activity. Login, registration, and transaction submission limits use expiring counters. Device identifiers and login emails are hashed before they are used in Redis keys. When Redis is unavailable, equivalent process-local tracking is used and is not shared between workers.
 
 ## Repository layout
 
