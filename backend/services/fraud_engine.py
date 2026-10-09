@@ -49,7 +49,8 @@ def score_transaction(
     device_activity_count: int = 0,
 ) -> Dict[str, Any]:
     amount = float(payload.get("amount", 0))
-    merchant = str(payload.get("merchant", "")).lower()
+    merchant_category = payload.get("merchant_category")
+    merchant = str(merchant_category or payload.get("merchant", "")).strip().casefold()
     currency = str(payload.get("currency", "USD")).upper()
     device_id = str(payload.get("device_id", "")).strip().casefold()
     blacklisted_devices = {
@@ -66,7 +67,7 @@ def score_transaction(
     if amount >= 5000:
         risk_score += 20
         reasons.append("Very large transaction volume")
-    if merchant in {"crypto", "gambling", "adult"}:
+    if merchant in {"crypto", "cryptocurrency", "gambling", "adult"}:
         risk_score += 25
         reasons.append("High-risk merchant category")
     if currency not in {"USD", "EUR", "GBP"}:

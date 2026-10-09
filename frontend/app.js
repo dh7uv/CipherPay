@@ -61,11 +61,23 @@ const elements = {
   form: document.getElementById('transaction-form'),
   submitButton: document.getElementById('submit-button'),
   formFeedback: document.getElementById('form-feedback'),
+  currency: document.getElementById('currency'),
+  amountCurrencySymbol: document.getElementById('amount-currency-symbol'),
   logoutButton: document.getElementById('logout-button'),
 };
 
 let transactions = [];
 let alerts = [];
+
+function updateAmountCurrencySymbol() {
+  const currency = elements.currency.value;
+  const parts = new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency,
+    currencyDisplay: 'narrowSymbol',
+  }).formatToParts(0);
+  elements.amountCurrencySymbol.textContent = parts.find((part) => part.type === 'currency')?.value || currency;
+}
 
 async function requestJson(path, options = {}) {
   const headers = new Headers(options.headers || {});
@@ -192,7 +204,12 @@ function renderTransactions() {
   const query = elements.search.value.trim().toLowerCase();
   const risk = elements.riskFilter.value;
   const filtered = transactions.filter((transaction) => {
-    const matchesSearch = [transaction.transaction_id, transaction.merchant]
+    const matchesSearch = [
+      transaction.transaction_id,
+      transaction.merchant,
+      transaction.merchant_category,
+      transaction.payment_method,
+    ]
       .some((value) => String(value || '').toLowerCase().includes(query));
     const matchesRisk = risk === 'all' || transaction.risk_category === risk;
     return matchesSearch && matchesRisk;
@@ -204,7 +221,7 @@ function renderTransactions() {
   if (!filtered.length) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
-    cell.colSpan = 6;
+    cell.colSpan = session.role === 'analyst' ? 8 : 7;
     cell.className = 'empty-cell';
     cell.textContent = transactions.length ? 'No transactions match these filters.' : 'No transactions have been submitted yet.';
     row.appendChild(cell);
@@ -225,8 +242,10 @@ function renderTransactions() {
     row.appendChild(identity);
 
     const merchant = makeCell('merchant-name', transaction.merchant || 'Unknown');
+    const category = makeCell('merchant-category', formatMerchantCategory(transaction));
+    const paymentMethod = makeCell('payment-method', transaction.payment_method || 'Not recorded');
     const amount = makeCell('amount-value', formatAmount(transaction.amount, transaction.currency));
-    row.append(merchant, amount);
+    row.append(merchant, category, paymentMethod, amount);
 
     const riskCell = document.createElement('td');
     const riskBadge = document.createElement('span');
@@ -359,6 +378,17 @@ function formatTransactionStatus(transaction) {
     return 'Verified · Under Review';
   }
   return transaction.status || 'Unknown';
+}
+
+function formatMerchantCategory(transaction) {
+  if (transaction.merchant_category) return transaction.merchant_category;
+  const legacyCategories = {
+    adult: 'Adult services',
+    bookshop: 'Books',
+    crypto: 'Cryptocurrency',
+    gambling: 'Gambling',
+  };
+  return legacyCategories[String(transaction.merchant || '').toLowerCase()] || 'Not recorded';
 }
 
 async function updateAlertStatus(alertId, select) {
@@ -541,6 +571,8 @@ async function submitTransaction(event) {
     amount: Number(document.getElementById('amount').value),
     currency: document.getElementById('currency').value,
     merchant: document.getElementById('merchant').value.trim(),
+    merchant_category: document.getElementById('merchant_category').value,
+    payment_method: document.getElementById('payment_method').value,
     device_id: document.getElementById('device_id').value.trim(),
     location: document.getElementById('location').value.trim(),
   };
@@ -567,6 +599,7 @@ async function submitTransaction(event) {
 }
 
 elements.form.addEventListener('submit', submitTransaction);
+elements.currency.addEventListener('change', updateAmountCurrencySymbol);
 elements.search.addEventListener('input', renderTransactions);
 elements.riskFilter.addEventListener('change', renderTransactions);
 elements.refreshButton.addEventListener('click', refreshDashboard);
@@ -576,4 +609,5 @@ elements.logoutButton.addEventListener('click', () => {
 });
 
 renderProfile();
+updateAmountCurrencySymbol();
 refreshDashboard();

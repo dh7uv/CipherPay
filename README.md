@@ -9,6 +9,7 @@ CipherPay is a synthetic transaction-monitoring and fraud-detection project. It 
 - Analyst and user sign-in with Argon2 password hashes and expiring JWTs.
 - Role-checked APIs: users can only access their own transactions; analysts can review the transaction network, alerts, audit records, and integrity checks.
 - Transaction risk scoring with explanatory rules, sliding-window user/device activity, request rate limiting, and an optional Random Forest model.
+- Transaction records keep merchant name, merchant category, payment method, and location as separate fields; risk rules use the merchant category rather than the merchant name.
 - AES-256-GCM encryption of device and location fields, with a fresh nonce and authentication tag per value.
 - HMAC-SHA-256 transaction integrity verification.
 - MongoDB persistence and indexes when MongoDB is reachable at startup. If it is unavailable during startup, the demo explicitly runs with in-memory storage instead; in-memory changes do not survive a restart.
@@ -103,6 +104,8 @@ All API routes use the `/api/v1` prefix.
 | `PATCH` | `/alerts/{alert_id}/resolve` | Analyst; compatibility endpoint |
 | `GET` | `/security/audit-logs` | Analyst |
 | `GET` | `/security/integrity-check/{transaction_id}` | Analyst; compatibility endpoint |
+
+Transaction submissions include a merchant name (`merchant`), a category (`merchant_category`), and a payment method (`payment_method`) as separate fields. Older clients may omit the latter two fields; their transactions are stored as category `Other` and payment method `Not specified`. Legacy category scoring falls back to the old `merchant` value only when no separate category is provided.
 
 Send protected requests with `Authorization: Bearer <access-token>`. Alert state changes and sensitive authentication, transaction, and integrity actions are recorded in the audit log.
 

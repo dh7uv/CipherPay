@@ -39,6 +39,27 @@ def test_configured_blacklisted_device_is_flagged(monkeypatch):
     assert "Device is on the configured fraud blocklist" in result["risk_reasons"]
 
 
+def test_merchant_category_drives_risk_independently_of_merchant_name(monkeypatch):
+    monkeypatch.setattr(fraud_engine, "_load_model", lambda: None)
+
+    merchant_name_only = score_transaction({
+        "amount": 20,
+        "merchant": "Crypto Market",
+        "merchant_category": "Grocery",
+        "currency": "USD",
+    })
+    result = score_transaction({
+        "amount": 20,
+        "merchant": "Everyday Market",
+        "merchant_category": "Crypto",
+        "currency": "USD",
+    })
+
+    assert "High-risk merchant category" not in merchant_name_only["risk_reasons"]
+    assert result["risk_score"] == 35
+    assert "High-risk merchant category" in result["risk_reasons"]
+
+
 def test_rule_fallback_is_explicit_when_model_is_missing(monkeypatch, tmp_path):
     monkeypatch.setattr(fraud_engine, "MODEL_PATH", tmp_path / "missing-model.joblib")
     fraud_engine._load_model.cache_clear()

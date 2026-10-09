@@ -131,8 +131,8 @@
               </div>
               <div class="table-scroll">
                 <table>
-                  <thead><tr><th scope="col">TRANSACTION</th><th scope="col">MERCHANT</th><th scope="col">AMOUNT</th><th scope="col">RISK</th><th scope="col">STATUS</th><th class="analyst-only" scope="col">INTEGRITY</th></tr></thead>
-                  <tbody id="transactions-list"><tr><td colspan="5" class="empty-cell">Loading transactions…</td></tr></tbody>
+                  <thead><tr><th scope="col">TRANSACTION</th><th scope="col">MERCHANT</th><th scope="col">CATEGORY</th><th scope="col">PAYMENT</th><th scope="col">AMOUNT</th><th scope="col">RISK</th><th scope="col">STATUS</th><th class="analyst-only" scope="col">INTEGRITY</th></tr></thead>
+                  <tbody id="transactions-list"><tr><td colspan="8" class="empty-cell">Loading transactions…</td></tr></tbody>
                 </table>
               </div>
             </article>
@@ -173,11 +173,13 @@
             <form id="transaction-form">
               <div class="form-fields">
                 <label class="field field-wide" for="user_id">User ID<span class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5 20v-1.5a7 7 0 0 1 14 0V20Z" /></svg><input type="text" id="user_id" value="demo-user" required autocomplete="off" /></span></label>
-                <label class="field" for="amount">Amount<span class="input-wrap"><span class="input-prefix">$</span><input type="number" id="amount" value="2500" min="0.01" step="0.01" required /></span></label>
-                <label class="field" for="currency">Currency<span class="input-wrap select-wrap"><select id="currency"><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg></span></label>
-                <label class="field" for="merchant">Merchant<span class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18M5 10V6l7-3 7 3v4m-14 0v9m5-9v9m5-9v9m5-9v9M3 21h18" /></svg><input type="text" id="merchant" value="crypto" required autocomplete="off" /></span></label>
+                <label class="field" for="amount">Amount<span class="input-wrap"><span class="input-prefix" id="amount-currency-symbol">₹</span><input type="number" id="amount" value="2500" min="0.01" step="0.01" required /></span></label>
+                <label class="field" for="currency">Currency<span class="input-wrap select-wrap"><select id="currency"><option value="INR" selected>INR — Indian Rupee</option><option value="USD">USD — US Dollar</option><option value="EUR">EUR — Euro</option><option value="GBP">GBP — British Pound</option><option value="JPY">JPY — Japanese Yen</option><option value="CAD">CAD — Canadian Dollar</option><option value="AUD">AUD — Australian Dollar</option><option value="SGD">SGD — Singapore Dollar</option><option value="AED">AED — UAE Dirham</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg></span></label>
+                <label class="field" for="merchant">Merchant name<span class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18M5 10V6l7-3 7 3v4m-14 0v9m5-9v9m5-9v9m5-9v9M3 21h18" /></svg><input type="text" id="merchant" value="City Market" maxlength="120" placeholder="e.g., City Market" required autocomplete="organization" /></span></label>
+                <label class="field" for="merchant_category">Merchant category<span class="input-wrap select-wrap"><select id="merchant_category"><option value="Grocery" selected>Grocery</option><option value="Electronics">Electronics</option><option value="Travel">Travel</option><option value="Restaurant">Restaurant</option><option value="Books">Books</option><option value="Digital goods">Digital goods</option><option value="Crypto">Cryptocurrency</option><option value="Gambling">Gambling</option><option value="Adult">Adult services</option><option value="Other">Other</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg></span></label>
+                <label class="field" for="payment_method">Payment method<span class="input-wrap select-wrap"><select id="payment_method"><option value="UPI" selected>UPI</option><option value="Credit card">Credit card</option><option value="Debit card">Debit card</option><option value="Bank transfer">Bank transfer</option><option value="Digital wallet">Digital wallet</option><option value="Net banking">Net banking</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg></span></label>
                 <label class="field" for="device_id">Device ID<span class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M10 17h4" /></svg><input type="text" id="device_id" value="dev-1234" required autocomplete="off" /></span></label>
-                <label class="field field-wide" for="location">Location<span class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg><input type="text" id="location" value="Berlin" required autocomplete="off" /></span></label>
+                <label class="field field-wide" for="location">City<span class="input-wrap select-wrap"><select id="location"><optgroup label="India"><option value="Mumbai" selected>Mumbai</option><option value="Delhi">Delhi</option><option value="Bengaluru">Bengaluru</option><option value="Hyderabad">Hyderabad</option><option value="Chennai">Chennai</option><option value="Kolkata">Kolkata</option><option value="Pune">Pune</option><option value="Ahmedabad">Ahmedabad</option><option value="Jaipur">Jaipur</option></optgroup><optgroup label="International"><option value="Berlin">Berlin</option><option value="London">London</option><option value="New York">New York</option><option value="Singapore">Singapore</option><option value="Dubai">Dubai</option><option value="Tokyo">Tokyo</option></optgroup></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg></span></label>
               </div>
               <div class="form-footer">
                 <p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p>
@@ -190,6 +192,6 @@
         </div>
       </main>
     </div>
-    <script src="/static/app.js?v=7" defer></script>
+    <script src="/static/app.js?v=9" defer></script>
   </body>
 </html>

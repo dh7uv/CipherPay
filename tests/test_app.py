@@ -25,12 +25,18 @@ def test_transaction_submission():
         json={
             "user_id": register_response.json()["user_id"],
             "amount": 2400,
-            "currency": "USD",
-            "merchant": "crypto",
+            "currency": "INR",
+            "merchant": "City Market",
+            "merchant_category": "Grocery",
+            "payment_method": "UPI",
             "device_id": "device-1",
-            "location": "Berlin",
+            "location": "Mumbai",
         },
     )
     assert transaction_response.status_code == 200
     payload = transaction_response.json()
     assert payload["risk"]["risk_category"] in {"Medium", "High", "Low"}
+    assert payload["transaction"]["merchant"] == "City Market"
+    assert payload["transaction"]["merchant_category"] == "Grocery"
+    assert payload["transaction"]["payment_method"] == "UPI"
+    assert payload["transaction"]["currency"] == "INR"

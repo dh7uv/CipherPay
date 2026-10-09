@@ -25,6 +25,27 @@ class TransactionCreate(BaseModel):
     amount: float = Field(gt=0, allow_inf_nan=False)
     currency: str = Field(default="USD", pattern="^[A-Z]{3}$")
     merchant: str = Field(min_length=1, max_length=120)
+    merchant_category: Literal[
+        "Grocery",
+        "Electronics",
+        "Travel",
+        "Restaurant",
+        "Books",
+        "Digital goods",
+        "Crypto",
+        "Gambling",
+        "Adult",
+        "Other",
+    ] | None = None
+    payment_method: Literal[
+        "UPI",
+        "Credit card",
+        "Debit card",
+        "Bank transfer",
+        "Digital wallet",
+        "Net banking",
+        "Not specified",
+    ] = "Not specified"
     device_id: str = Field(min_length=1, max_length=128)
     location: str = Field(min_length=1, max_length=120)
 
@@ -61,13 +82,14 @@ async def submit_transaction(
         )
 
     transaction_id = f"txn_{uuid4().hex[:12]}"
+    scoring_payload = payload.model_dump()
     activity = redis_service.record_transaction(
         payload.user_id,
         payload.device_id,
         transaction_id,
     )
     risk_data = score_transaction(
-        payload.model_dump(),
+        scoring_payload,
         velocity_count=activity["velocity_count"],
         device_activity_count=activity["device_activity_count"],
     )
@@ -77,6 +99,8 @@ async def submit_transaction(
         "amount": payload.amount,
         "currency": payload.currency,
         "merchant": payload.merchant,
+        "merchant_category": payload.merchant_category or "Other",
+        "payment_method": payload.payment_method,
         "device_id": encrypt_value(payload.device_id),
         "location": encrypt_value(payload.location),
         "status": "Under Review" if risk_data["risk_score"] >= 40 else "Approved",
