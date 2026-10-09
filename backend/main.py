@@ -14,7 +14,6 @@ from .routes.alerts import router as alerts_router
 from .routes.analytics import router as analytics_router
 from .routes.auth import router as auth_router
 from .routes.security import router as security_router
-from .routes.simulations import router as simulations_router
 from .routes.transactions import router as transactions_router
 from .services.auth_service import hash_password
 from .services.crypto_service import encrypt_value, sign_transaction
@@ -121,7 +120,6 @@ app.include_router(transactions_router, prefix=f"{settings.api_v1_str}/transacti
 app.include_router(alerts_router, prefix=f"{settings.api_v1_str}/alerts", tags=["alerts"])
 app.include_router(analytics_router, prefix=f"{settings.api_v1_str}/analytics", tags=["analytics"])
 app.include_router(security_router, prefix=f"{settings.api_v1_str}/security", tags=["security"])
-app.include_router(simulations_router, prefix=f"{settings.api_v1_str}/simulations", tags=["simulations"])
 
 frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
 app.mount("/static", StaticFiles(directory=frontend_dir), name="static")

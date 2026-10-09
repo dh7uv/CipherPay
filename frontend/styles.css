@@ -224,31 +224,6 @@ tbody tr:last-child td { border-bottom: 0; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 .analyst-only[hidden] { display: none !important; }
 
-.attack-simulation-card { margin-top: 15px; padding: 18px; scroll-margin-top: 78px; }
-.attack-simulation-card:target { outline: 2px solid rgb(21 142 129 / 34%); outline-offset: 3px; }
-.simulation-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-.simulation-heading h2 { margin-top: 5px; color: #27344a; font: 700 15px/1.35 "Manrope", sans-serif; letter-spacing: -.25px; }
-.simulation-only-badge { flex: 0 0 auto; padding: 5px 8px; border: 1px solid #d8ede2; border-radius: 5px; color: #29835f; background: #f0f8f3; font-size: 8px; font-weight: 700; letter-spacing: .45px; }
-.attack-simulation-form { display: flex; align-items: flex-end; gap: 10px; margin-top: 16px; }
-.attack-simulation-form .field { width: min(360px, 100%); }
-.attack-simulation-form select { min-height: 36px; padding: 0 10px; border: 1px solid #e3e8ee; border-radius: 6px; color: #46556a; background: #fff; font: inherit; }
-.attack-simulation-form .button { min-height: 36px; }
-.attack-simulation-form .button:disabled { opacity: .7; cursor: wait; }
-.simulation-safety-note { margin-top: 10px; color: #8a95a4; font-size: 9px; line-height: 1.55; }
-.simulation-results { margin-top: 13px; }
-.simulation-empty, .simulation-error { color: #8994a3; font-size: 9px; line-height: 1.5; }
-.simulation-error { color: #b34f55; }
-.simulation-summary { padding: 9px 11px; border: 1px solid #e8edf2; border-radius: 6px; color: #46556a; background: #fafbfd; font-size: 10px; font-weight: 600; line-height: 1.5; }
-.simulation-result-list { display: grid; max-height: 350px; gap: 0; overflow: auto; margin: 8px 0 0; padding: 0; list-style: none; }
-.simulation-result-item { padding: 10px 2px; border-bottom: 1px solid #f0f2f5; }
-.simulation-result-item:last-child { border-bottom: 0; }
-.simulation-result-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #46566d; font-size: 9px; }
-.simulation-result-heading .risk-badge { flex: 0 0 auto; }
-.simulation-detected, .simulation-not-detected { margin-top: 6px; font-size: 9px; font-weight: 600; }
-.simulation-detected { color: #b77e2d; }
-.simulation-not-detected { color: #29835f; }
-.simulation-reasons { margin-top: 4px; color: #8994a3; font-size: 8px; line-height: 1.55; white-space: normal; }
-
 .profile-menu { display: grid; width: 28px; height: 28px; flex: 0 0 auto; place-items: center; padding: 0; border: 0; border-radius: 6px; color: #91a0b2; background: transparent; cursor: pointer; }
 .profile-menu:hover { color: #e9f1f8; background: #26374a; }
 .profile-menu svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.6; }
@@ -403,11 +378,6 @@ tbody tr:last-child td { border-bottom: 0; }
   td { padding-right: 8px; padding-left: 8px; font-size: 9px; }
   .transaction-id { font-size: 8px; }
   .form-card { gap: 13px; margin-top: 10px; padding: 14px 12px; }
-  .attack-simulation-card { margin-top: 10px; padding: 14px 12px; }
-  .attack-simulation-form { align-items: stretch; flex-direction: column; }
-  .attack-simulation-form .field { width: 100%; }
-  .attack-simulation-form .button { align-self: flex-start; }
-  .simulation-result-heading { align-items: flex-start; flex-direction: column; gap: 6px; }
   .form-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px 8px; }
   .field-wide { grid-column: span 1; }
   .page-footer { flex-direction: column; gap: 5px; font-size: 7px; }

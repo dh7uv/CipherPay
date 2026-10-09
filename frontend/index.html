@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/static/styles.css?v=6" />
+    <link rel="stylesheet" href="/static/styles.css?v=5" />
   </head>
   <body>
     <div class="app-shell">
@@ -44,10 +44,6 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
             Risk alerts
             <span class="nav-count" id="sidebar-alert-count">—</span>
-          </a>
-          <a class="nav-link analyst-only" href="#simulations">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1" /><circle cx="12" cy="12" r="5" /><path d="m10.5 12 1 1 2-2" /></svg>
-            Attack simulations
           </a>
           <a class="nav-link" href="#new-transaction">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
@@ -190,34 +186,10 @@
             </form>
           </section>
 
-          <section class="card attack-simulation-card analyst-only" id="simulations" aria-labelledby="simulation-title">
-            <div class="simulation-heading">
-              <div>
-                <div class="section-kicker">DEFENSIVE TEST LAB</div>
-                <h2 id="simulation-title">Synthetic attack scenarios</h2>
-                <p class="card-description">Run safe, generated patterns through the existing fraud scoring rules.</p>
-              </div>
-              <span class="simulation-only-badge">NOT PERSISTED</span>
-            </div>
-            <form class="attack-simulation-form" id="attack-simulation-form">
-              <label class="field" for="simulation-scenario">
-                Scenario
-                <select id="simulation-scenario">
-                  <option value="" selected disabled>Loading scenarios…</option>
-                </select>
-              </label>
-              <button class="button button-primary" id="run-simulation-button" type="submit" disabled>Run synthetic scenario</button>
-            </form>
-            <p class="simulation-safety-note">All activity is synthetic and stays in this preview. It does not submit transactions, create alerts, write to MongoDB, or change Redis counters.</p>
-            <div class="simulation-results" id="simulation-results" aria-live="polite" aria-atomic="true">
-              <p class="simulation-empty">Choose a scenario and run it to inspect detection results.</p>
-            </div>
-          </section>
-
           <footer class="page-footer"><span><span class="footer-lock" aria-hidden="true">◇</span> CipherPay <span class="footer-separator">·</span> Secure transaction monitoring</span><span>Demo environment <span class="footer-separator">·</span> Synthetic data only</span></footer>
         </div>
       </main>
     </div>
-    <script src="/static/app.js?v=9" defer></script>
+    <script src="/static/app.js?v=7" defer></script>
   </body>
 </html>
