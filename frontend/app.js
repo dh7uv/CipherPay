@@ -206,9 +206,9 @@ function renderTransactions() {
   const filtered = transactions.filter((transaction) => {
     const matchesSearch = [
       transaction.transaction_id,
-      transaction.merchant,
       transaction.merchant_category,
       transaction.payment_method,
+      transaction.location_display,
     ]
       .some((value) => String(value || '').toLowerCase().includes(query));
     const matchesRisk = risk === 'all' || transaction.risk_category === risk;
@@ -241,11 +241,11 @@ function renderTransactions() {
     identity.append(transactionId, date);
     row.appendChild(identity);
 
-    const merchant = makeCell('merchant-name', transaction.merchant || 'Unknown');
     const category = makeCell('merchant-category', formatMerchantCategory(transaction));
     const paymentMethod = makeCell('payment-method', transaction.payment_method || 'Not recorded');
     const amount = makeCell('amount-value', formatAmount(transaction.amount, transaction.currency));
-    row.append(merchant, category, paymentMethod, amount);
+    const location = makeCell('transaction-location', transaction.location_display || 'Not recorded');
+    row.append(category, paymentMethod, amount, location);
 
     const riskCell = document.createElement('td');
     const riskBadge = document.createElement('span');
@@ -570,7 +570,6 @@ async function submitTransaction(event) {
     user_id: document.getElementById('user_id').value.trim(),
     amount: Number(document.getElementById('amount').value),
     currency: document.getElementById('currency').value,
-    merchant: document.getElementById('merchant').value.trim(),
     merchant_category: document.getElementById('merchant_category').value,
     payment_method: document.getElementById('payment_method').value,
     device_id: document.getElementById('device_id').value.trim(),

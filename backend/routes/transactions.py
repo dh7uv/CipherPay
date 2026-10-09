@@ -11,7 +11,7 @@ from ..config import get_settings
 from ..database import persist_document, update_document
 from ..dependencies import get_current_user
 from ..services.audit_service import log_event
-from ..services.crypto_service import encrypt_value, sign_transaction, verify_transaction_integrity
+from ..services.crypto_service import decrypt_value, encrypt_value, sign_transaction, verify_transaction_integrity
 from ..services.fraud_engine import score_transaction
 from ..services.redis_service import redis_service
 from ..services.transaction_integrity import load_transaction_for_verification
@@ -23,8 +23,8 @@ settings = get_settings()
 class TransactionCreate(BaseModel):
     user_id: str = Field(min_length=1, max_length=128)
     amount: float = Field(gt=0, allow_inf_nan=False)
-    currency: str = Field(default="USD", pattern="^[A-Z]{3}$")
-    merchant: str = Field(min_length=1, max_length=120)
+    currency: str = Field(default="INR", pattern="^[A-Z]{3}$")
+    merchant: str | None = Field(default=None, min_length=1, max_length=120)
     merchant_category: Literal[
         "Grocery",
         "Electronics",
@@ -98,7 +98,6 @@ async def submit_transaction(
         "user_id": payload.user_id,
         "amount": payload.amount,
         "currency": payload.currency,
-        "merchant": payload.merchant,
         "merchant_category": payload.merchant_category or "Other",
         "payment_method": payload.payment_method,
         "device_id": encrypt_value(payload.device_id),
@@ -109,6 +108,8 @@ async def submit_transaction(
         "risk_reasons": risk_data["risk_reasons"],
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
+    if payload.merchant is not None:
+        transaction_payload["merchant"] = payload.merchant
     signature = sign_transaction(transaction_payload)
     transaction = {**transaction_payload, "integrity_hmac": signature}
     await persist_document("transactions", transaction)
@@ -148,7 +149,24 @@ async def list_transactions(
     if transaction_status:
         transactions = [item for item in transactions if item["status"] == transaction_status]
     total = len(transactions)
-    return {"transactions": transactions[skip:skip + limit], "total": total, "limit": limit, "skip": skip}
+    page = transactions[skip:skip + limit]
+    response_transactions = []
+    for transaction in page:
+        response_transaction = {**transaction}
+        encrypted_location = transaction.get("location")
+        if isinstance(encrypted_location, dict):
+            response_transaction["location_display"] = decrypt_value(encrypted_location)
+        elif isinstance(encrypted_location, str):
+            response_transaction["location_display"] = encrypted_location
+        else:
+            response_transaction["location_display"] = "Not recorded"
+        response_transactions.append(response_transaction)
+    return {
+        "transactions": response_transactions,
+        "total": total,
+        "limit": limit,
+        "skip": skip,
+    }
 
 
 @router.get("/{transaction_id}")

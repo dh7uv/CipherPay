@@ -18,15 +18,14 @@ def test_transaction_submission():
         json={"email": "user@example.com", "password": "securepass", "role": "user"},
     )
     assert register_response.status_code == 200
+    authorization = "Bearer " + register_response.json()["token"]
 
     transaction_response = client.post(
         "/api/v1/transactions/submit",
-        headers={"Authorization": f"Bearer {register_response.json()['token']}"},
+        headers={"Authorization": authorization},
         json={
             "user_id": register_response.json()["user_id"],
             "amount": 2400,
-            "currency": "INR",
-            "merchant": "City Market",
             "merchant_category": "Grocery",
             "payment_method": "UPI",
             "device_id": "device-1",
@@ -36,7 +35,19 @@ def test_transaction_submission():
     assert transaction_response.status_code == 200
     payload = transaction_response.json()
     assert payload["risk"]["risk_category"] in {"Medium", "High", "Low"}
-    assert payload["transaction"]["merchant"] == "City Market"
+    assert "merchant" not in payload["transaction"]
     assert payload["transaction"]["merchant_category"] == "Grocery"
     assert payload["transaction"]["payment_method"] == "UPI"
     assert payload["transaction"]["currency"] == "INR"
+
+    listed_transactions = client.get(
+        "/api/v1/transactions/",
+        headers={"Authorization": authorization},
+    )
+    listed_transaction = next(
+        transaction
+        for transaction in listed_transactions.json()["transactions"]
+        if transaction["transaction_id"] == payload["transaction"]["transaction_id"]
+    )
+    assert listed_transaction["location_display"] == "Mumbai"
+    assert isinstance(listed_transaction["location"], dict)
