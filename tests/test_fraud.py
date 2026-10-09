@@ -52,6 +52,7 @@ def test_rule_fallback_is_explicit_when_model_is_missing(monkeypatch, tmp_path):
 
 def test_in_memory_velocity_and_device_windows_expire_independently():
     service = RedisService()
+    service._client = None
     first = service.record_transaction("user-1", "device-1", "txn-1", timestamp=100_000)
     second = service.record_transaction("user-1", "device-1", "txn-2", timestamp=100_001)
     after_velocity_window = service.record_transaction(
@@ -68,6 +69,7 @@ def test_in_memory_velocity_and_device_windows_expire_independently():
 
 def test_rate_limiter_enforces_limit_and_resets_after_window():
     service = RedisService()
+    service._client = None
 
     assert service.allow_request("ratelimit:test", 2, 60)
     assert service.allow_request("ratelimit:test", 2, 60)
@@ -76,6 +78,7 @@ def test_rate_limiter_enforces_limit_and_resets_after_window():
 
 def test_in_memory_fallback_prunes_expired_unseen_rate_keys():
     service = RedisService()
+    service._client = None
     service._fallback["ratelimit:expired-email"] = {"count": 1, "expires_at": 1}
     service._fallback["velocity:user:expired-user"] = {"old-transaction": 1.0}
 

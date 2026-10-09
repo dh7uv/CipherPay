@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def isolate_api_test_state(request, monkeypatch):
-    if request.module.__name__ not in {"test_app", "test_auth"}:
+    if request.module.__name__ not in {"test_app", "test_auth", "test_simulations"}:
         yield
         return
 

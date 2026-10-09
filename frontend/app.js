@@ -61,6 +61,10 @@ const elements = {
   form: document.getElementById('transaction-form'),
   submitButton: document.getElementById('submit-button'),
   formFeedback: document.getElementById('form-feedback'),
+  simulationForm: document.getElementById('attack-simulation-form'),
+  simulationScenario: document.getElementById('simulation-scenario'),
+  simulationButton: document.getElementById('run-simulation-button'),
+  simulationResults: document.getElementById('simulation-results'),
   logoutButton: document.getElementById('logout-button'),
 };
 
@@ -566,7 +570,90 @@ async function submitTransaction(event) {
   }
 }
 
+function renderSimulation(result) {
+  elements.simulationResults.replaceChildren();
+  const summary = document.createElement('p');
+  summary.className = 'simulation-summary';
+  summary.textContent = `${result.scenario.name}: ${result.summary.detected_count} of ${result.summary.transaction_count} synthetic transactions flagged; highest risk ${result.summary.highest_risk_score}/100.`;
+  elements.simulationResults.appendChild(summary);
+
+  const list = document.createElement('ol');
+  list.className = 'simulation-result-list';
+  result.transactions.forEach((transaction) => {
+    const item = document.createElement('li');
+    item.className = 'simulation-result-item';
+
+    const heading = document.createElement('div');
+    heading.className = 'simulation-result-heading';
+    const label = document.createElement('strong');
+    label.textContent = `${transaction.simulation_id} · ${formatAmount(transaction.amount, transaction.currency)} ${transaction.merchant}`;
+    const risk = document.createElement('span');
+    risk.className = `risk-badge risk-${transaction.risk_category.toLowerCase()}`;
+    risk.textContent = `${transaction.risk_category} · ${transaction.risk_score}/100`;
+    heading.append(label, risk);
+
+    const status = document.createElement('p');
+    status.className = transaction.detected ? 'simulation-detected' : 'simulation-not-detected';
+    status.textContent = transaction.detected ? 'Flagged for analyst review' : 'Not flagged';
+
+    const reasons = document.createElement('p');
+    reasons.className = 'simulation-reasons';
+    reasons.textContent = transaction.risk_reasons.join(' · ');
+
+    item.append(heading, status, reasons);
+    list.appendChild(item);
+  });
+  elements.simulationResults.appendChild(list);
+}
+
+async function runAttackSimulation(event) {
+  event.preventDefault();
+  elements.simulationButton.disabled = true;
+  elements.simulationButton.textContent = 'Running scenario…';
+  elements.simulationResults.replaceChildren();
+
+  try {
+    const result = await requestJson('/simulations/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scenario_id: elements.simulationScenario.value }),
+    });
+    renderSimulation(result);
+  } catch (error) {
+    const message = document.createElement('p');
+    message.className = 'simulation-error';
+    message.textContent = `Scenario could not be run: ${error.message}`;
+    elements.simulationResults.appendChild(message);
+  } finally {
+    elements.simulationButton.disabled = false;
+    elements.simulationButton.textContent = 'Run synthetic scenario';
+  }
+}
+
+async function loadSimulationScenarios() {
+  try {
+    const result = await requestJson('/simulations/scenarios');
+    if (!Array.isArray(result.scenarios) || result.scenarios.length === 0) {
+      throw new Error('No scenarios are currently available.');
+    }
+    elements.simulationScenario.replaceChildren();
+    result.scenarios.forEach((scenario) => {
+      const option = document.createElement('option');
+      option.value = scenario.id;
+      option.textContent = scenario.name;
+      elements.simulationScenario.appendChild(option);
+    });
+    elements.simulationButton.disabled = false;
+  } catch (error) {
+    const message = document.createElement('p');
+    message.className = 'simulation-error';
+    message.textContent = `Scenarios could not be loaded: ${error.message}`;
+    elements.simulationResults.replaceChildren(message);
+  }
+}
+
 elements.form.addEventListener('submit', submitTransaction);
+elements.simulationForm.addEventListener('submit', runAttackSimulation);
 elements.search.addEventListener('input', renderTransactions);
 elements.riskFilter.addEventListener('change', renderTransactions);
 elements.refreshButton.addEventListener('click', refreshDashboard);
@@ -576,4 +663,5 @@ elements.logoutButton.addEventListener('click', () => {
 });
 
 renderProfile();
+if (session.role === 'analyst') loadSimulationScenarios();
 refreshDashboard();

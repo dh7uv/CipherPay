@@ -13,6 +13,7 @@ CipherPay is a synthetic transaction-monitoring and fraud-detection project. It 
 - HMAC-SHA-256 transaction integrity verification.
 - MongoDB persistence and indexes when MongoDB is reachable at startup. If it is unavailable during startup, the demo explicitly runs with in-memory storage instead; in-memory changes do not survive a restart.
 - Redis-backed velocity and rate-limit tracking when Redis is reachable, with a logged in-memory fallback for local demonstrations.
+- Analyst-only defensive simulator for synthetic card-testing, takeover-like, velocity, and shared-device patterns, plus a normal-traffic control. Results exercise the existing fraud scorer and are not written to MongoDB or Redis.
 - Responsive dashboard, searchable and filterable transaction history, live service status, alert review workflows, and user/analyst-specific views.
 
 ## Requirements
@@ -81,7 +82,7 @@ Training writes `ml/model.joblib`, which is ignored by Git. Restart the API afte
 python -m pytest -q
 ```
 
-The tests cover authentication/authorization, database adapter behavior, encryption and HMAC integrity, transaction flows, rule-based risk scoring, and model-driven risk elevation.
+The tests cover authentication/authorization, database adapter behavior, encryption and HMAC integrity, transaction flows, synthetic fraud scenarios and their non-persistence, rule-based risk scoring, and model-driven risk elevation.
 
 ## API overview
 
@@ -97,6 +98,8 @@ All API routes use the `/api/v1` prefix.
 | `GET` | `/transactions/{transaction_id}` | Authenticated; owner or analyst |
 | `POST` | `/transactions/{transaction_id}/verify-integrity` | Analyst; records a verified integrity status when valid |
 | `POST` | `/transactions/{transaction_id}/decision` | Analyst; approve/decline a verified transaction under review |
+| `GET` | `/simulations/scenarios` | Analyst; list synthetic defensive scenarios |
+| `POST` | `/simulations/run` | Analyst; score a synthetic scenario without persisting transactions or alerts |
 | `GET` | `/analytics/dashboard` | Analyst |
 | `GET` | `/alerts/` | Analyst |
 | `PATCH` | `/alerts/{alert_id}` | Analyst; set status to `Open`, `Under Investigation`, `Resolved`, or `Dismissed` |
