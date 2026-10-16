@@ -1,140 +1,207 @@
-# CipherPay
+# CipherPay 🔐
 
-CipherPay is a synthetic transaction-monitoring and fraud-detection project. It combines a FastAPI service, a responsive analyst dashboard, MongoDB persistence, Redis-backed activity tracking, and a rule-based fraud engine with an optional scikit-learn model.
+**A secure transaction-monitoring and fraud-detection platform built with FastAPI, MongoDB, Redis, and machine learning.**
 
-> **Demo only.** CipherPay does not process payments. Use synthetic data, keep local secrets private, and do not rely on the demo fraud model for real payment decisions.
+CipherPay is an educational fintech project that demonstrates transaction risk scoring, fraud alerts, encrypted sensitive data, transaction integrity verification, and analyst workflows through a responsive dashboard.
 
-## Features
+> **Disclaimer:** CipherPay is a demonstration project using synthetic data. It does not process real payments and is not intended for production financial decisions.
 
-- Analyst and user sign-in with Argon2 password hashes and expiring JWTs.
-- Role-checked APIs: users can only access their own transactions; analysts can review the transaction network, alerts, audit records, and integrity checks.
-- Transaction risk scoring with explanatory rules, sliding-window user/device activity, request rate limiting, and an optional Random Forest model.
-- Transaction records keep merchant category, payment method, and location as separate fields. The merchant name is optional for legacy clients; risk rules use the category, not the name.
-- Authorized transaction listings show the city while location remains encrypted in storage.
-- AES-256-GCM encryption of device and location fields, with a fresh nonce and authentication tag per value.
-- HMAC-SHA-256 transaction integrity verification.
-- MongoDB persistence and indexes when MongoDB is reachable at startup. If it is unavailable during startup, the demo explicitly runs with in-memory storage instead; in-memory changes do not survive a restart.
-- Redis-backed velocity and rate-limit tracking when Redis is reachable, with a logged in-memory fallback for local demonstrations.
-- Responsive dashboard, searchable and filterable transaction history, live service status, alert review workflows, and user/analyst-specific views.
+## ✨ Features
 
-## Requirements
+- **Authentication and access control** — Password hashing, expiring JWTs, and role-based authorization for users and analysts.
+- **Fraud detection** — Rule-based transaction risk scoring with explanatory risk signals and optional Random Forest model support.
+- **Transaction monitoring** — Searchable transaction history, risk scores, and analyst review workflows.
+- **Security and privacy** — AES-256-GCM encryption for sensitive device and location fields, plus HMAC-SHA-256 transaction integrity verification.
+- **Real-time activity tracking** — Redis-backed velocity tracking and rate limiting, with a process-local fallback.
+- **Persistent storage** — MongoDB collections and indexes when the database is available at startup.
+- **Audit logging** — Records sensitive authentication, transaction, and integrity-related actions.
+- **Interactive dashboard** — Responsive user and analyst views, alert management, filtering, and service health information.
+
+## 🧰 Tech Stack
+
+| Area | Technologies |
+|---|---|
+| Backend | Python, FastAPI |
+| Frontend | HTML, CSS, JavaScript |
+| Database | MongoDB |
+| Activity tracking | Redis-compatible service |
+| Machine learning | scikit-learn, Random Forest |
+| Security | Argon2, JWT, AES-GCM, HMAC-SHA-256 |
+| Testing | pytest |
+
+## 🏗️ Architecture
+
+```text
+User / Analyst
+      |
+      v
+Web Dashboard
+(HTML, CSS, JavaScript)
+      |
+      v
+FastAPI Backend
+      |
+      +------ Authentication & Authorization
+      +------ Transaction Management
+      +------ Fraud Risk Scoring
+      +------ Encryption & Integrity Checks
+      +------ Alerts & Audit Logging
+      |
+      +------ MongoDB: Persistent Records
+      +------ Redis: Activity & Rate Limits
+      +------ scikit-learn: Optional ML Model
+```
+
+## 📁 Project Structure
+
+```text
+CipherPay/
+├── backend/
+│   ├── routes/
+│   ├── services/
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   └── dependencies.py
+├── frontend/
+│   ├── index.html
+│   ├── login.html
+│   ├── app.js
+│   ├── login.js
+│   └── styles.css
+├── ml/
+│   ├── synthetic_data.py
+│   ├── train_model.py
+│   └── evaluate_model.py
+├── tests/
+├── .env.example
+├── .gitignore
+├── requirements.txt
+├── pyproject.toml
+├── run.py
+└── README.md
+```
+
+## ⚙️ Getting Started
+
+### Prerequisites
 
 - Python 3.10 or newer
-- MongoDB (optional for an ephemeral in-memory demo; recommended for persistence)
-- Redis (optional; in-memory risk-tracking fallback is provided)
+- MongoDB (optional for an in-memory demonstration)
+- Redis or a compatible service (optional)
 
-## Run locally on Windows
+### 1. Clone the repository
 
-From the repository root in PowerShell:
+```bash
+git clone https://github.com/dh7uv/CipherPay.git
+cd CipherPay
+```
+
+### 2. Create and activate a virtual environment
+
+**Windows PowerShell**
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
+```
+
+**macOS / Linux**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
 python -m pip install -r requirements.txt
+```
+
+### 4. Configure environment variables
+
+Copy the example configuration:
+
+```powershell
 Copy-Item .env.example .env
 ```
 
-Before using the app beyond a local demo, replace the placeholder signing/encryption keys in `.env`. Generate independent keys with:
+On macOS or Linux:
 
-```powershell
-python -c "import secrets; print(secrets.token_urlsafe(48))"
-python -c "import base64, secrets; print(base64.b64encode(secrets.token_bytes(32)).decode())"
-python -c "import secrets; print(secrets.token_hex(32))"
+```bash
+cp .env.example .env
 ```
 
-Use these values for `SECRET_KEY`, `ENCRYPTION_KEY`, and `HMAC_SECRET_KEY`, respectively. The AES key must be base64 that decodes to exactly 32 bytes. Do not commit `.env`.
+Replace placeholder secrets with independent, randomly generated keys before using the application beyond a local demonstration. Keep `.env` private and never commit real secrets.
 
-For a Windows-native Redis-compatible service, install Memurai Developer from PowerShell:
+### 5. Start the backend
 
-```powershell
-winget install --id Memurai.MemuraiDeveloper --exact --accept-package-agreements --accept-source-agreements
-```
-
-Approve the Windows elevation prompt if requested. The Memurai service is configured to start automatically and listens on `127.0.0.1:6379` by default. Confirm it is running with `Get-Service Memurai` or `& 'C:\Program Files\Memurai\memurai-cli.exe' -h 127.0.0.1 -p 6379 ping`.
-
-Set `MONGO_URI`, `MONGO_DB_NAME`, `REDIS_HOST`, `REDIS_PORT`, `SEED_DEMO_DATA`, and (if needed) `REDIS_PASSWORD` in `.env`. For the default Memurai setup, use `REDIS_HOST=127.0.0.1` and `REDIS_PORT=6379`. Set `FRAUD_BLACKLISTED_DEVICE_IDS` to a comma-separated list of synthetic device identifiers to flag. Start MongoDB and Memurai before the API so both connections are available at startup. MongoDB and Redis availability are checked when the app starts.
-
-After startup, confirm both backend connections at <http://127.0.0.1:8000/api/v1/health>; `database_connected` and `redis_connected` should both be `true`.
-
-Start the API and dashboard:
-
-```powershell
+```bash
 python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Open <http://127.0.0.1:8000/login>. With the example configuration (`SEED_DEMO_DATA=true`), the local analyst account is `demo@cipherpay.local` with password `demo123`. Demo data is opt-in and disabled by default; set `SEED_DEMO_DATA=false` and replace local secrets before deploying or exposing the service to a network.
+Open the application:
 
-API documentation is available at <http://127.0.0.1:8000/docs>; the health endpoint is <http://127.0.0.1:8000/api/v1/health>.
+- **Dashboard / login:** http://127.0.0.1:8000/login
+- **API documentation:** http://127.0.0.1:8000/docs
+- **Health check:** http://127.0.0.1:8000/api/v1/health
 
-## Train and evaluate the optional fraud model
+Start MongoDB and Redis before launching the API if you want to use those services. Check the health endpoint to confirm which services connected successfully.
 
-The application uses its rule-based engine when no compatible model artifact is present. To train a demonstration Random Forest using a reproducible, normalized synthetic dataset:
+### Demo credentials
 
-```powershell
+If demo seeding is explicitly enabled in your local configuration, use the demo account configured by the project. Do not use demonstration credentials in a deployed environment.
+
+## 🤖 Machine Learning
+
+CipherPay supports an optional Random Forest model alongside its rule-based fraud scoring engine.
+
+Train the model:
+
+```bash
 python -m ml.train_model
+```
+
+Evaluate it:
+
+```bash
 python -m ml.evaluate_model
 ```
 
-Training writes `ml/model.joblib`, which is ignored by Git. Restart the API after training to load the model. Evaluation reports precision, recall, F1, a confusion matrix, and average precision (area under the precision-recall curve). Synthetic metrics are not evidence of real-world model performance.
+The evaluation scripts report classification metrics such as precision, recall, F1 score, confusion matrix, and average precision. Because the project uses synthetic data, these results should not be interpreted as evidence of performance on real transactions.
 
-## Run tests
+## 🧪 Testing
 
-```powershell
+Run the test suite from the repository root:
+
+```bash
 python -m pytest -q
 ```
 
-The tests cover authentication/authorization, database adapter behavior, encryption and HMAC integrity, transaction flows, rule-based risk scoring, and model-driven risk elevation.
+Tests cover authentication and authorization, transaction flows, encryption and integrity checks, fraud scoring, database adapter behavior, and model-related risk scoring.
 
-## API overview
+## 🔒 Security Notes
 
-All API routes use the `/api/v1` prefix.
+- Never commit `.env`, real credentials, signing keys, or encryption keys.
+- Use synthetic data only; do not upload real payment or personal information.
+- Keep the development server bound to localhost during local demonstrations.
+- Configure unique secrets and disable demo data before any deployment.
+- Review authentication, encryption, storage, and deployment settings before considering any production use.
 
-| Method | Route | Access |
-| --- | --- | --- |
-| `POST` | `/auth/register` | Public; creates a standard user |
-| `POST` | `/auth/login` | Public |
-| `GET` | `/health` | Public |
-| `POST` | `/transactions/submit` | Authenticated; users submit for themselves |
-| `GET` | `/transactions/` | Authenticated; user-scoped or analyst-wide, with pagination and filters |
-| `GET` | `/transactions/{transaction_id}` | Authenticated; owner or analyst |
-| `POST` | `/transactions/{transaction_id}/verify-integrity` | Analyst; records a verified integrity status when valid |
-| `POST` | `/transactions/{transaction_id}/decision` | Analyst; approve/decline a verified transaction under review |
-| `GET` | `/analytics/dashboard` | Analyst |
-| `GET` | `/alerts/` | Analyst |
-| `PATCH` | `/alerts/{alert_id}` | Analyst; set status to `Open`, `Under Investigation`, `Resolved`, or `Dismissed` |
-| `PATCH` | `/alerts/{alert_id}/resolve` | Analyst; compatibility endpoint |
-| `GET` | `/security/audit-logs` | Analyst |
-| `GET` | `/security/integrity-check/{transaction_id}` | Analyst; compatibility endpoint |
+## 🚀 Future Improvements
 
-Transaction submissions use a category (`merchant_category`) and payment method (`payment_method`); the dashboard defaults to INR. Merchant names are optional for older or external clients and are no longer collected or shown by the dashboard. Category and payment method remain separate fields. Older clients may omit them; transactions are stored as category `Other` and payment method `Not specified`. Legacy category scoring falls back to the old `merchant` value only when no separate category is provided.
+- Add automated CI testing and code-quality checks.
+- Improve fraud-model evaluation with carefully designed validation datasets.
+- Add more monitoring and explainability for analyst decisions.
+- Expand integration and security testing.
 
-Send protected requests with `Authorization: Bearer <access-token>`. Alert state changes and sensitive authentication, transaction, and integrity actions are recorded in the audit log.
+## 👨‍💻 Author
 
-## Persistence and indexes
+**Dhruv Marfatia**
 
-When MongoDB is available at startup, CipherPay creates indexes for unique user emails and transaction/alert/audit IDs; transaction owner/date, status/date, and risk score; alert status/date; and audit actor/timestamp. Collections are loaded into the application store on startup and mutations are persisted as they occur. If the database is unavailable, health reports that local storage is in use; restarting in that mode discards changes.
+GitHub: [@dh7uv](https://github.com/dh7uv)
 
-Redis uses sorted sets for per-user transaction velocity (one-hour window) and device activity. Login, registration, and transaction submission limits use expiring counters. Device identifiers and login emails are hashed before they are used in Redis keys. When Redis is unavailable, equivalent process-local tracking is used and is not shared between workers.
+---
 
-## Repository layout
-
-```text
-backend/
-  main.py
-  config.py
-  database.py
-  dependencies.py
-  routes/                 API endpoints
-  services/               Authentication, audit, crypto, fraud, and Redis logic
-frontend/
-  index.html
-  login.html
-  app.js
-  login.js
-  styles.css
-ml/
-  synthetic_data.py
-  train_model.py
-  evaluate_model.py
-tests/
-```
+*CipherPay is an educational software project exploring secure transaction monitoring and fraud detection.*
